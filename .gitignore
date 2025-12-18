@@ -1,0 +1,18 @@
+# Node
+node_modules/
+dist/
+build/
+*.log
+.env
+.env.*
+
+# Next.js
+.next/
+out/
+
+# Vite
+dist/
+
+# OS / IDE
+.DS_Store
+.vscode/
