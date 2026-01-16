@@ -6,6 +6,16 @@ jobs:
     steps:
       - uses: actions/checkout@v3
       - uses: pnpm/action-setup@v2
-      - run: pnpm install
-      - run: pnpm run lint
-      - run: pnpm run build
+      
+      - name: Install dependencies
+        run: pnpm install
+        
+      # ✅ NEW: Generate Prisma Client (critical for TypeScript)
+      - name: Generate Prisma Client
+        run: pnpm --filter backend exec prisma generate
+        
+      - name: Lint
+        run: pnpm -r run lint  # Uses root package.json's "lint" script
+        
+      - name: Build
+        run: pnpm -r run build  # Uses root package.json's "build" script
