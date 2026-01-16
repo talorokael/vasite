@@ -9,6 +9,10 @@ jobs:
       
       - name: Install dependencies
         run: pnpm install
+
+      - name: Load environment variables
+        run: |
+          echo "DATABASE_URL=postgresql://dummy:password@localhost:5432/verdeafrique?schema=public" >> $GITHUB_ENV
         
       # ✅ NEW: Generate Prisma Client (critical for TypeScript)
       - name: Generate Prisma Client
