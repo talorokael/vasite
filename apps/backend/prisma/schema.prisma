@@ -1,22 +1,112 @@
-// This is your Prisma schema file,
-// learn more about it in the docs: https://pris.ly/d/prisma-schema
-
-// Looking for ways to speed up your queries, or scale easily with your serverless or edge functions?
-// Try Prisma Accelerate: https://pris.ly/cli/accelerate-init
-
+// This is your Prisma schema file
 generator client {
   provider = "prisma-client-js"
 }
 
 datasource db {
   provider = "postgresql"
-  
+  // URL is provided via prisma.config.ts
 }
 
-model Product {
+// === AUTHENTICATION MODELS ===
+model User {
+  id            String    @id @default(cuid())
+  email         String    @unique
+  name          String?
+  passwordHash  String
+  role          Role      @default(USER)
+  createdAt     DateTime  @default(now())
+  updatedAt     DateTime  @updatedAt
+
+  sessions      Session[]
+  products      Product[] // Products owned/created by this user
+
+  @@map("users")
+}
+
+model Session {
   id        String   @id @default(cuid())
-  name      String
-  price     Int
+  userId    String
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  token     String   @unique // ⬅️ ADD THIS LINE (must be unique)
+  expiresAt DateTime
   createdAt DateTime @default(now())
+
+  @@map("sessions")
+  @@index([userId])
 }
 
+enum Role {
+  USER
+  ADMIN
+}
+
+// === ENHANCED PRODUCT CATALOG MODELS ===
+model Category {
+  id          String    @id @default(cuid())
+  name        String    @unique
+  description String?
+  slug        String    @unique
+  imageUrl    String?
+  parentId    String?
+  parent      Category? @relation("CategoryToCategory", fields: [parentId], references: [id])
+  children    Category[] @relation("CategoryToCategory")
+  products    Product[]
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+
+  @@map("categories")
+}
+
+// ⚠️ ONLY ONE PRODUCT MODEL - USE THIS ENHANCED VERSION
+model Product {
+  id             String    @id @default(cuid())
+  name           String
+  description    String?
+  sku            String?   @unique
+  price          Int
+  compareAtPrice Int?
+  inventory      Int       @default(0)
+  weight         Float?
+  isAvailable    Boolean   @default(true)
+  featured       Boolean   @default(false)
+
+  // Core Relations
+  category    Category? @relation(fields: [categoryId], references: [id])
+  categoryId  String?
+  user        User?     @relation(fields: [userId], references: [id])
+  userId      String?
+
+  // Cannabis & Apothecary Specific Attributes
+  productType ProductType
+  strainType  StrainType?
+  cbdContent  Float?
+  thcContent  Float?
+  size        String?
+
+  // Metadata
+  tags        String[]
+  images      String[]
+  createdAt   DateTime    @default(now())
+  updatedAt   DateTime    @updatedAt
+
+  @@map("products")
+}
+
+// === SUPPORTING ENUMS ===
+enum ProductType {
+  FLOWER
+  CONCENTRATE
+  EDIBLE
+  TOPICAL
+  TINCTURE
+  CAPSULE
+  ACCESSORY
+  MERCHANDISE
+}
+
+enum StrainType {
+  SATIVA
+  INDICA
+  HYBRID
+}
