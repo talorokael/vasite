@@ -1,25 +1,21 @@
-// This is your Prisma schema file
 generator client {
   provider = "prisma-client-js"
 }
 
 datasource db {
   provider = "postgresql"
-  // URL is provided via prisma.config.ts
 }
 
-// === AUTHENTICATION MODELS ===
 model User {
-  id            String    @id @default(cuid())
-  email         String    @unique
-  name          String?
-  passwordHash  String
-  role          Role      @default(USER)
-  createdAt     DateTime  @default(now())
-  updatedAt     DateTime  @updatedAt
-
-  sessions      Session[]
-  products      Product[] // Products owned/created by this user
+  id           String    @id @default(cuid())
+  email        String    @unique
+  name         String?
+  passwordHash String
+  role         Role      @default(USER)
+  createdAt    DateTime  @default(now())
+  updatedAt    DateTime  @updatedAt
+  products     Product[]
+  sessions     Session[]
 
   @@map("users")
 }
@@ -27,13 +23,57 @@ model User {
 model Session {
   id        String   @id @default(cuid())
   userId    String
-  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
-  token     String   @unique // ⬅️ ADD THIS LINE (must be unique)
   expiresAt DateTime
   createdAt DateTime @default(now())
+  token     String   @unique
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
 
-  @@map("sessions")
   @@index([userId])
+  @@map("sessions")
+}
+
+model Category {
+  id          String     @id @default(cuid())
+  name        String     @unique
+  description String?
+  slug        String     @unique
+  imageUrl    String?
+  parentId    String?
+  createdAt   DateTime   @default(now())
+  updatedAt   DateTime   @updatedAt
+  parent      Category?  @relation("CategoryToCategory", fields: [parentId], references: [id])
+  children    Category[] @relation("CategoryToCategory")
+  products    Product[]
+
+  @@map("categories")
+}
+
+model Product {
+  id             String      @id @default(cuid())
+  name           String
+  description    String?
+  sku            String?     @unique
+  price          Int
+  compareAtPrice Int?
+  inventory      Int         @default(0)
+  weight         Float?
+  isAvailable    Boolean     @default(true)
+  featured       Boolean     @default(false)
+  categoryId     String?
+  userId         String?
+  productType    ProductType
+  strainType     StrainType?
+  cbdContent     Float?
+  thcContent     Float?
+  size           String?
+  tags           String[]
+  images         String[]
+  createdAt      DateTime    @default(now())
+  updatedAt      DateTime    @updatedAt
+  category       Category?   @relation(fields: [categoryId], references: [id])
+  user           User?       @relation(fields: [userId], references: [id])
+
+  @@map("products")
 }
 
 enum Role {
@@ -41,59 +81,6 @@ enum Role {
   ADMIN
 }
 
-// === ENHANCED PRODUCT CATALOG MODELS ===
-model Category {
-  id          String    @id @default(cuid())
-  name        String    @unique
-  description String?
-  slug        String    @unique
-  imageUrl    String?
-  parentId    String?
-  parent      Category? @relation("CategoryToCategory", fields: [parentId], references: [id])
-  children    Category[] @relation("CategoryToCategory")
-  products    Product[]
-  createdAt   DateTime  @default(now())
-  updatedAt   DateTime  @updatedAt
-
-  @@map("categories")
-}
-
-// ⚠️ ONLY ONE PRODUCT MODEL - USE THIS ENHANCED VERSION
-model Product {
-  id             String    @id @default(cuid())
-  name           String
-  description    String?
-  sku            String?   @unique
-  price          Int
-  compareAtPrice Int?
-  inventory      Int       @default(0)
-  weight         Float?
-  isAvailable    Boolean   @default(true)
-  featured       Boolean   @default(false)
-
-  // Core Relations
-  category    Category? @relation(fields: [categoryId], references: [id])
-  categoryId  String?
-  user        User?     @relation(fields: [userId], references: [id])
-  userId      String?
-
-  // Cannabis & Apothecary Specific Attributes
-  productType ProductType
-  strainType  StrainType?
-  cbdContent  Float?
-  thcContent  Float?
-  size        String?
-
-  // Metadata
-  tags        String[]
-  images      String[]
-  createdAt   DateTime    @default(now())
-  updatedAt   DateTime    @updatedAt
-
-  @@map("products")
-}
-
-// === SUPPORTING ENUMS ===
 enum ProductType {
   FLOWER
   CONCENTRATE

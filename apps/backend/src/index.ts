@@ -4,14 +4,25 @@ import authRouter from './routes/auth.js';
 import { ProductType, StrainType } from '@prisma/client';
 import { authenticate } from './middleware/auth.js';
 import { requireRole } from './middleware/rbac.js';
-
+import cors  from 'cors';
 const app = express()
 
 app.use(express.json())
 
+app.use(cors({
+  origin: 'http://localhost:3000',
+  credentials: true
+}));
+
 const port = process.env.PORT || 3001
 
 app.use('/api/auth', authRouter);
+
+// Import the router (add this at the top with your other imports)
+import categoriesRoutes from './routes/categories.js';
+
+// ... later, with your other app.use() calls ...
+app.use('/api/categories', categoriesRoutes);
 
 
 
