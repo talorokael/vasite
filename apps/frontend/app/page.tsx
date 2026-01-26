@@ -1,9 +1,13 @@
 // apps/frontend/app/page.tsx
-import { apiClient } from '../lib/api-client';
-import { Product, Category  } from '../types';
-import ProductBrowser from '../components/ProductBrowser'; 
-import LoginForm from '@/components/LoginForm';
-import RegisterForm from '@/components/RegisterForm';
+export const dynamic = 'force-dynamic'
+
+
+import { apiClient } from '@/lib/api-client'
+import { Product, Category } from '@/types'
+import ProductBrowser from '@/components/ProductBrowser'
+import LoginForm from '@/components/LoginForm'
+import RegisterForm from '@/components/RegisterForm'
+
 
 
 export default async function Home() {
@@ -37,6 +41,3 @@ export default async function Home() {
   );
 }
 
-// STEP 4: Temporary inline Client Component until we create the real one
-// This keeps the build working while we create proper components
-// 'use client' directive marks this as a Client Component
