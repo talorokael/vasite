@@ -3,15 +3,17 @@
 import { useState, useEffect } from 'react';
 import { useRouter, useParams } from 'next/navigation';
 import { apiClient } from '@/lib/api-client';
+import { Category, Product } from 'shared-types'; 
+import { useCallback } from 'react';
 
 export default function EditProductPage() {
   const router = useRouter();
   const params = useParams();
   const productId = params.id as string;
 
-  const [categories, setCategories] = useState<any[]>([]);
+  const [categories, setCategories] = useState<Category[]>([]);
   const [loading, setLoading] = useState(false);
-  const [product, setProduct] = useState<any>(null);
+  const [product, setProduct] = useState<Product | null>(null);
   const [formData, setFormData] = useState({
     name: '',
     description: '',
@@ -25,11 +27,9 @@ export default function EditProductPage() {
     images: '',
   });
 
-  useEffect(() => {
-    loadData();
-  }, [productId]);
+  
 
-  const loadData = async () => {
+  const loadData = useCallback(async () => {
     try {
       // Load categories
       const categoriesData = await apiClient.getCategories();
@@ -61,7 +61,11 @@ export default function EditProductPage() {
       console.error('Failed to load data:', error);
       alert('Failed to load product data');
     }
-  };
+  }, [productId, router]);
+
+  useEffect(() => {
+    loadData();
+  }, [loadData]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -83,9 +87,10 @@ export default function EditProductPage() {
 
       await apiClient.updateProduct(productId, updateData);
       router.push('/admin/products');
-    } catch (error: any) {
-      console.error('Failed to update product:', error);
-      alert(`Failed to update product: ${error.message}`);
+    } catch (error: unknown) {
+  console.error('Failed to update product:', error);
+  const message = error instanceof Error ? error.message : 'Unknown error';
+  alert(`Failed to update product: ${message}`);
     } finally {
       setLoading(false);
     }

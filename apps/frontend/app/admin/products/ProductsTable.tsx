@@ -48,24 +48,25 @@ export default function ProductsTable() {
   };
 
   const handleDelete = async (productId: string) => {
-  if (!confirm("Are you sure you want to delete this product?")) return;
+    if (!confirm("Are you sure you want to delete this product?")) return;
 
-  try {
-    await apiClient.deleteProduct(productId);
-    
-    // If not showing deleted, remove from UI immediately
-    if (!showDeleted) {
-      setProducts(prev => prev.filter(p => p.id !== productId));
-      setTotalItems(prev => prev - 1);
-    } else {
-      // If showing deleted, just refresh to update status
-      fetchProducts();
+    try {
+      await apiClient.deleteProduct(productId);
+
+      // If not showing deleted, remove from UI immediately
+      if (!showDeleted) {
+        setProducts((prev) => prev.filter((p) => p.id !== productId));
+        setTotalItems((prev) => prev - 1);
+      } else {
+        // If showing deleted, just refresh to update status
+        fetchProducts();
+      }
+    } catch (error: unknown) {
+      console.error("Failed to delete product:", error);
+      const message = error instanceof Error ? error.message : "Unknown error";
+      alert(`Failed to delete product: ${message}`);
     }
-  } catch (error: any) {
-    console.error("Failed to delete product:", error);
-    alert(`Failed to delete product: ${error.message}`);
-  }
-};
+  };
 
   if (isLoading) {
     return <div className="p-8">Loading products...</div>;
@@ -202,22 +203,20 @@ export default function ProductsTable() {
 
                 {/* ✅ Correct + guarded actions */}
                 <td className="px-6 py-4 text-sm font-medium">
-                  
-                    <>
-                      <Link
-                        href={`/admin/products/${product.id}/edit`}
-                        className="text-indigo-600 hover:text-indigo-900 mr-4"
-                      >
-                        Edit
-                      </Link>
-                      <button
-                        onClick={() => handleDelete(product.id)}
-                        className="text-red-600 hover:text-red-900"
-                      >
-                        Delete
-                      </button>
-                    </>
-                  
+                  <>
+                    <Link
+                      href={`/admin/products/${product.id}/edit`}
+                      className="text-indigo-600 hover:text-indigo-900 mr-4"
+                    >
+                      Edit
+                    </Link>
+                    <button
+                      onClick={() => handleDelete(product.id)}
+                      className="text-red-600 hover:text-red-900"
+                    >
+                      Delete
+                    </button>
+                  </>
                 </td>
               </tr>
             ))}

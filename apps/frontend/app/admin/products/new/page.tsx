@@ -3,10 +3,11 @@
 import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { apiClient } from '@/lib/api-client';
+import { Category } from 'shared-types';
 
 export default function NewProductPage() {
   const router = useRouter();
-  const [categories, setCategories] = useState<any[]>([]);
+  const [categories, setCategories] = useState<Category[]>([]);
   const [loading, setLoading] = useState(false);
   const [formData, setFormData] = useState({
     name: '',
@@ -54,9 +55,10 @@ export default function NewProductPage() {
 
       await apiClient.createProduct(productData);
       router.push('/admin/products');
-    } catch (error: any) {
-      console.error('Failed to create product:', error);
-      alert(`Failed to create product: ${error.message}`);
+    } catch (error: unknown) {
+  console.error('Failed to create product:', error);
+  const message = error instanceof Error ? error.message : 'Unknown error';
+  alert(`Failed to create product: ${message}`);
     } finally {
       setLoading(false);
     }

@@ -2,13 +2,12 @@
 
 import DebugAuth from './DebugAuth';
 import ProductBrowser from './ProductBrowser';
-import LoginForm from './LoginForm';
-import RegisterForm from './RegisterForm';
+import { Product, Category } from 'shared-types'
 import Link from 'next/link';
 
 interface HomePageClientProps {
-  products: any[];
-  categories: any[];
+  products: Product[];
+  categories: Category[];
 }
 
 export default function HomePageClient({ products, categories }: HomePageClientProps) {
