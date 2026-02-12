@@ -2,20 +2,28 @@
 
 import { useState } from 'react';
 import { useAuth } from '../lib/AuthContext';
+import { useRouter } from 'next/navigation';
 
 export default function LoginForm() {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [error, setError] = useState('');
   const { login, isLoading } = useAuth();
+  const router = useRouter();
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setError('');
     try {
-      await login(email, password);
+      const response = await login(email, password);
+      // ✅ Check role from the returned user object
+      if (response.user.role === 'ADMIN') {
+        router.push('/admin');
+      } else {
+        router.push('/');
+      }
     } catch (err) {
-      console.error('Login error:', err);  
+      console.error('Login error:', err);
       setError('Invalid email or password');
     }
   };

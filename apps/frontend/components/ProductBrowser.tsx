@@ -34,7 +34,7 @@ export default function ProductBrowser({
       />
 
       {/* Display product count */}
-      <p className="text-gray-600">
+      <p className="text-white-600">
         Showing {filteredProducts.length} of {initialProducts.length} products
       </p>
 

@@ -4,7 +4,7 @@ import crypto from 'crypto';
 
 // Configuration
 const SALT_ROUNDS = 12;
-const SESSION_DURATION_MS = 1000 * 60 * 60 * 24 * 7; // 7 days
+export const SESSION_DURATION_MS = 1000 * 60 * 60 * 24 * 7; // 7 days
 
 /**
  * Hash a plain text password using bcrypt.
@@ -46,7 +46,7 @@ export async function createSession(userId: string) {
     },
   });
 
-  return session;
+  return { ...session, token };
 }
 
 /**
@@ -72,15 +72,15 @@ export async function validateSession(token: string) {
   });
 
   // Check if session exists, is not expired, and user still exists
-  if (!session || session.expiresAt < new Date() || !session.user) {
-    // If session is invalid, clean it up
-    if (session) {
-      await prisma.session.delete({ where: { id: session.id } }).catch(() => {});
-    }
-    return null;
+  if (!session || session.expiresAt < new Date()) {
+     return null;
   }
 
-  return session;
+  return {
+    id: session.id,
+    expiresAt: session.expiresAt,
+    user: session.user, // This now includes role
+  };
 }
 
 /**

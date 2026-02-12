@@ -12,6 +12,7 @@ model User {
   name         String?
   passwordHash String
   role         Role      @default(USER)
+  metadata     Json?      
   createdAt    DateTime  @default(now())
   updatedAt    DateTime  @updatedAt
   products     Product[]

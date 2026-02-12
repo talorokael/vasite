@@ -1,23 +1,30 @@
-'use client';
+"use client";
 
-import { useState } from 'react';
-import { useAuth } from '../lib/AuthContext';
+import { useState } from "react";
+import { useAuth } from "../lib/AuthContext";
+import { useRouter } from "next/navigation";
 
 export default function RegisterForm() {
-  const [email, setEmail] = useState('');
-  const [password, setPassword] = useState('');
-  const [name, setName] = useState('');
-  const [error, setError] = useState('');
+  const [email, setEmail] = useState("");
+  const [password, setPassword] = useState("");
+  const [name, setName] = useState("");
+  const [error, setError] = useState("");
   const { register, isLoading } = useAuth();
+  const router = useRouter();
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    setError('');
+    setError("");
     try {
-      await register(email, password, name);
+      const response = await register(email, password, name);
+      if (response.user.role === "ADMIN") {
+        router.push("/admin");
+      } else {
+        router.push("/");
+      }
     } catch (err) {
-      console.error('Registration error:', err);  
-      setError('Registration failed. Please try again.');
+      console.error("Registration error:", err);
+      setError("Registration failed. Please try again.");
     }
   };
 
@@ -64,7 +71,7 @@ export default function RegisterForm() {
           disabled={isLoading}
           className="w-full bg-green-600 text-white py-2 px-4 rounded-md hover:bg-green-700 disabled:opacity-50"
         >
-          {isLoading ? 'Registering...' : 'Register'}
+          {isLoading ? "Registering..." : "Register"}
         </button>
       </form>
     </div>

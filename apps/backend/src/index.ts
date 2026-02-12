@@ -1,122 +1,120 @@
-import express from 'express'
-import { prisma } from '../src/lib/prisma.js'
+// apps/backend/src/index.ts
+import express from 'express';
+import cors from 'cors';
+import helmet from 'helmet';
+import rateLimit from 'express-rate-limit';
+
+
+// Import routes
+import usersRouter from './routes/users.js';
 import authRouter from './routes/auth.js';
-import { ProductType, StrainType } from '@prisma/client';
-import { authenticate } from './middleware/auth.js';
-import { requireRole } from './middleware/rbac.js';
-import cors  from 'cors';
-const app = express()
-
-app.use(express.json())
-
-app.use(cors({
-  origin: 'http://localhost:3000',
-  credentials: true
-}));
-
-const port = process.env.PORT || 3001
-
-app.use('/api/auth', authRouter);
-
-// Import the router (add this at the top with your other imports)
 import categoriesRoutes from './routes/categories.js';
+import productRoutes from './routes/products.js';
+import statsRouter from './routes/stats.js';
 
-// ... later, with your other app.use() calls ...
-app.use('/api/categories', categoriesRoutes);
+import cookieParser from 'cookie-parser';
 
+const app = express();
+const port = process.env.PORT || 3001;
 
+/**
+ * SECURITY MIDDLEWARE STACK
+ * Order matters: security layers before routes
+ */
+app.use(helmet()); // 11 security headers
+app.use(cookieParser());
 
-app.get('/api/health', (_, res) => res.json({ ok: true }))
+// Rate limiting – disabled in development for easier debugging
+if (process.env.NODE_ENV === 'production') {
+  const limiter = rateLimit({
+    windowMs: 15 * 60 * 1000, // 15 minutes
+    max: 100,
+    message: 'Too many requests, please try again later.',
+    standardHeaders: true,
+    legacyHeaders: false,
+  });
+  app.use(limiter);
+} else {
+  console.log('⚠️  Rate limiting disabled in development');
+}
 
-app.get('/api/products', async (_, res) => {
-  try {
-    const products = await prisma.product.findMany()
-    res.json(products)
-  } catch (error) {
-    console.error(error)
-    res.status(500).json({ error: 'Failed to fetch products' })
-  }
-})
-
-// Replace the entire POST /api/products endpoint with:
-app.post('/api/products', authenticate, requireRole(['ADMIN']), async (req, res) => {
-  try {
-    const {
-      name,
-      description,
-      price,
-      productType,
-      categoryId,
-      sku,
-      compareAtPrice,
-      inventory,
-      weight,
-      strainType,
-      cbdContent,
-      thcContent,
-      size,
-      tags,
-      images,
-      
-    } = req.body;
-
-    // Basic validation for absolutely required fields
-    if (!name || typeof price !== 'number' || !productType) {
-      return res.status(400).json({ 
-        error: 'Missing required fields: name, price, and productType are required' 
-      });
-    }
-
-    // Validate that productType is a valid enum value
-    if (!Object.values(ProductType).includes(productType)) {
-      return res.status(400).json({ 
-        error: 'Invalid productType', 
-        validTypes: Object.values(ProductType) 
-      });
-    }
-
-    // Validate strainType if provided
-    if (strainType && !Object.values(StrainType).includes(strainType)) {
-      return res.status(400).json({ 
-        error: 'Invalid strainType', 
-        validTypes: Object.values(StrainType) 
-      });
-    }
-
-    const product = await prisma.product.create({
-      data: {
-        name,
-        description: description || null,
-        price,
-        productType,
-        categoryId: categoryId || null,
-        sku: sku || null,
-        compareAtPrice: compareAtPrice || null,
-        inventory: inventory || 0,
-        weight: weight || null,
-        strainType: strainType || null,
-        cbdContent: cbdContent || null,
-        thcContent: thcContent || null,
-        size: size || null,
-        tags: tags || [],
-        images: images || [],
-        userId: req.user!.id 
-      }
-    });
-
-    res.status(201).json(product);
-  } catch (error) {
-    console.error('Error creating product:', error);
-    
-    // Handle unique constraint violation (e.g., duplicate SKU)
-    if (error instanceof Error && error.message.includes('Unique constraint')) {
-      return res.status(409).json({ error: 'A product with this SKU already exists' });
-    }
-    
-    res.status(500).json({ error: 'Failed to create product' });
-  }
+/* const limiter = rateLimit({
+  windowMs: 15 * 60 * 1000, // 15 minutes
+  max: 100, // 100 requests per IP
+  message: 'Too many requests, please try again later.',
+  standardHeaders: true,
+  legacyHeaders: false,
 });
 
+app.use(limiter); */
+
+
+
+app.use(cors({
+  origin: process.env.FRONTEND_URL || 'http://localhost:3000',
+  credentials: true,
+  methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
+  allowedHeaders: ['Content-Type', 'Authorization']
+}));
+
+app.use(express.json({ limit: '10mb' }));
+
+/**
+ * ROUTE REGISTRATION
+ * All route logic belongs in their respective route files
+ */
+app.use('/api/auth', authRouter);
+app.use('/api/categories', categoriesRoutes);
+app.use('/api/products', productRoutes);
+app.use('/api/users', usersRouter);
+app.use('/api/admin/stats', statsRouter);
+
+/**
+ * HEALTH CHECK
+ * Simple endpoint for monitoring/load balancers
+ */
+app.get('/api/health', (_, res) => {
+  res.json({ 
+    ok: true, 
+    timestamp: new Date().toISOString(),
+    service: 'verdeafrique-backend'
+  });
+});
+
+/**
+ * 404 HANDLER
+ * Catch-all for undefined routes
+ */
+app.all(/.*/, (req, res) => {
+  res.status(404).json({ 
+    error: 'Route not found',
+    path: req.originalUrl,
+    method: req.method 
+  });
+});
+
+/**
+ * GLOBAL ERROR HANDLER
+ * Last middleware in the chain
+ */
+app.use((error: Error, req: express.Request, res: express.Response, next: express.NextFunction) => {
+  console.error('Server error:', error);
+  
+  const isProduction = process.env.NODE_ENV === 'production';
+  
+  res.status(500).json({
+    error: 'Internal server error',
+    message: isProduction ? 'Something went wrong' : error.message,
+    ...(!isProduction && { stack: error.stack })
+  });
+    next(error)
+});
+
+/**
+ * SERVER STARTUP
+ */
 app.listen(port, () => {
-  console.log(`Backend running on port ${port}`)
-})
+  console.log(`🚀 Backend running on port ${port}`);
+  console.log(`📊 Health: http://localhost:${port}/api/health`);
+  console.log(`🛡️  Security: Enabled (Helmet, rate limiting)`);
+});

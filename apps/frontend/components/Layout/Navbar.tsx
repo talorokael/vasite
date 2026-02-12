@@ -2,10 +2,10 @@
 'use client';
 
 import Link from 'next/link';
-import { useState } from 'react';
+
 
 export default function Navbar() {
-  const [isMenuOpen, setIsMenuOpen] = useState(false);
+  
 
   return (
     <nav className="bg-white shadow-lg">

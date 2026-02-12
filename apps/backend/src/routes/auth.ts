@@ -2,6 +2,19 @@ import express from 'express';
 import { z } from 'zod'; // For robust input validation
 import { prisma } from '../lib/prisma.js';
 import { hashPassword, verifyPassword, createSession, invalidateSession, validateSession } from '../lib/auth.js';
+import { SESSION_DURATION_MS } from '../lib/auth.js';
+
+const setSessionCookie = (res: express.Response, token: string) => {
+  const isProduction = process.env.NODE_ENV === 'production';
+  
+  res.cookie('session_token', token, {
+    httpOnly: true,
+    secure: isProduction, // HTTPS only in production
+    sameSite: isProduction ? 'strict' : 'lax',
+    maxAge: SESSION_DURATION_MS,
+    path: '/',
+  });
+};
 
 const router: express.Router = express.Router();
 
@@ -48,10 +61,8 @@ router.post('/register', async (req, res) => {
     const session = await createSession(user.id);
 
     // 5. Return user info and session token
-    res.status(201).json({
-      user,
-      session: { token: session.token, expiresAt: session.expiresAt }
-    });
+    setSessionCookie(res, session.token);
+    res.json({ user });
 
   } catch (error) {
     if (error instanceof z.ZodError) {
@@ -90,10 +101,8 @@ router.post('/login', async (req, res) => {
     // 5. Return user info (without passwordHash) and session
     const { passwordHash, ...userWithoutHash } = user;
     void passwordHash;
-    res.json({
-      user: userWithoutHash,
-      session: { token: session.token, expiresAt: session.expiresAt }
-    });
+    setSessionCookie(res, session.token);
+    res.json({ user: userWithoutHash });
 
   } catch (error) {
     if (error instanceof z.ZodError) {
@@ -111,14 +120,23 @@ router.post('/login', async (req, res) => {
  */
 router.post('/logout', async (req, res) => {
   try {
-    const token = req.headers.authorization?.replace('Bearer ', '');
+    const token = req.cookies?.session_token || req.headers.authorization?.replace('Bearer ', '');
+    
     if (!token) {
       return res.status(400).json({ error: 'No session token provided' });
     }
 
     await invalidateSession(token);
+    
+    // Clear the cookie
+    res.clearCookie('session_token', {
+      httpOnly: true,
+      secure: process.env.NODE_ENV === 'production',
+      sameSite: 'strict',
+      path: '/',
+    });
+    
     res.json({ message: 'Successfully logged out' });
-
   } catch (error) {
     console.error('Logout error:', error);
     res.status(500).json({ error: 'Internal server error during logout' });
@@ -132,7 +150,8 @@ router.post('/logout', async (req, res) => {
  */
 router.get('/me', async (req, res) => {
   try {
-    const token = req.headers.authorization?.replace('Bearer ', '');
+    const token = req.cookies?.session_token || req.headers.authorization?.replace('Bearer ', '');
+    
     if (!token) {
       return res.status(401).json({ error: 'Authentication required' });
     }
@@ -143,7 +162,6 @@ router.get('/me', async (req, res) => {
     }
 
     res.json({ user: session.user });
-
   } catch (error) {
     console.error('Me endpoint error:', error);
     res.status(500).json({ error: 'Internal server error' });

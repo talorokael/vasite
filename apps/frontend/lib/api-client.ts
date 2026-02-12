@@ -1,98 +1,195 @@
 // apps/frontend/lib/api-client.ts
-import { Product, User, Category } from '../types';
+import { Product, User, Category } from "../types";
 
-const API_BASE_URL = 'http://localhost:3001';
+const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:3001";
 
-interface AuthResponse {
-  user: User;
-  token: string;
-}
+
 
 export class ApiClient {
-  private token: string | null = null;
+  private async request<T>(
+  endpoint: string,
+  options: RequestInit = {},
+): Promise<T> {
+  const url = `${API_BASE_URL}${endpoint}`;
 
-  setToken(token: string | null) {
-  this.token = token;
-  // Also sync with localStorage
-  if (typeof window !== 'undefined') {
-    if (token) {
-      localStorage.setItem('auth_token', token);
-    } else {
-      localStorage.removeItem('auth_token');
-    }
-  }
-}
-
-  private async request<T>(endpoint: string, options: RequestInit = {}): Promise<T> {
-    const url = `${API_BASE_URL}${endpoint}`;
-    const headers: Record<string, string> = {
-      'Content-Type': 'application/json',
-    };
-
-    if (options.headers) {
-      const existingHeaders = options.headers as Record<string, string>;
-      Object.assign(headers, existingHeaders);
-    }
-
-    if (this.token) {
-      headers['Authorization'] = `Bearer ${this.token}`;
-    }
-
-    const response = await fetch(url, {
-      ...options,
-      headers,
-    });
-
-    if (!response.ok) {
-      throw new Error(`HTTP ${response.status}`);
-    }
-
-    return response.json() as Promise<T>;
-  }
-
-  async getProducts(): Promise<Product[]> {
-    return this.request<Product[]>('/api/products');
-  }
-  
-  
-async getCategories(): Promise<Category[]> {
-  return this.request<Category[]>('/api/categories');
-}
-
-// Also add register method (for AuthContext):
-async register(email: string, password: string, name?: string): Promise<AuthResponse> {
-  const data = await this.request<AuthResponse>('/api/auth/register', {
-    method: 'POST',
-    body: JSON.stringify({ email, password, name }),
+  const response = await fetch(url, {
+    ...options,
+    credentials: "include",
+    headers: {
+      "Content-Type": "application/json",
+      ...options.headers,
+    },
   });
-  this.setToken(data.token);
-  return data;
-}
 
-// And getMe method:
-async getMe(): Promise<User> {
-  return this.request<User>('/api/auth/me');
-}
+  // Handle 204 No Content
+  if (response.status === 204) {
+    return {} as T;
+  }
 
-// Add logout method to clear token:
-logout() {
-  this.token = null;
-  // If using localStorage:
-  if (typeof window !== 'undefined') {
-    localStorage.removeItem('auth_token');
+  // Get response text once
+  const text = await response.text();
+
+  // If response is not OK, throw detailed error
+  if (!response.ok) {
+    let errorMessage = `HTTP ${response.status}: ${response.statusText}`;
+    try {
+      // Try to parse error as JSON (backend might send { error: "..." })
+      const errorJson = JSON.parse(text);
+      errorMessage = errorJson.error || errorJson.message || errorMessage;
+    } catch {
+      // If not JSON, use text (truncated)
+      if (text) errorMessage += ` - ${text.substring(0, 100)}`;
+    }
+    throw new Error(errorMessage);
+  }
+
+  // Handle empty responses
+  if (!text) {
+    return {} as T;
+  }
+
+  // Now safe to parse JSON
+  try {
+    return JSON.parse(text) as T;
+  } catch  {
+    throw new Error(`Invalid JSON response: ${text.substring(0, 100)}`);
   }
 }
 
-  async login(email: string, password: string): Promise<AuthResponse> {
-    const data = await this.request<AuthResponse>('/api/auth/login', {
-      method: 'POST',
-      body: JSON.stringify({ email, password }),
+  public async fetch<T>(
+    endpoint: string,
+    options: RequestInit = {},
+  ): Promise<T> {
+    return this.request<T>(endpoint, options);
+  }
+
+  // Update the getProducts method:
+  async getProducts(params?: { page?: number; limit?: number }): Promise<{
+    products: Product[];
+    pagination: {
+      total: number;
+      page: number;
+      limit: number;
+      totalPages: number;
+    };
+  }> {
+    const query = new URLSearchParams();
+    if (params?.page) query.set("page", params.page.toString());
+    if (params?.limit) query.set("limit", params.limit.toString());
+
+    return this.request<{
+      products: Product[];
+      pagination: {
+        total: number;
+        page: number;
+        limit: number;
+        totalPages: number;
+      };
+    }>(`/api/products?${query.toString()}`);
+  }
+
+  // Add to apps/frontend/lib/api-client.ts
+  async deleteProduct(id: string): Promise<void> {
+    return this.request(`/api/products/${id}`, {
+      method: "DELETE",
     });
-    this.setToken(data.token);
+  }
+
+  async updateProduct(id: string, data: Partial<Product>): Promise<Product> {
+    return this.request<Product>(`/api/products/${id}`, {
+      method: "PUT",
+      body: JSON.stringify(data),
+    });
+  }
+
+  async createProduct(data: Omit<Product, "id">): Promise<Product> {
+    return this.request<Product>("/api/products", {
+      method: "POST",
+      body: JSON.stringify(data),
+    });
+  }
+
+  async getCategories(): Promise<Category[]> {
+    return this.request<Category[]>("/api/categories");
+  }
+
+  async register(
+    email: string,
+    password: string,
+    name?: string,
+  ): Promise<{ user: User }> {
+    const data = await this.request<{ user: User }>("/api/auth/register", {
+      method: "POST",
+      body: JSON.stringify({ email, password, name }),
+    });
     return data;
   }
-}
 
- 
+  // Add logout method to clear token:
+
+  async login(email: string, password: string): Promise<{ user: User }> {
+    const data = await this.request<{ user: User }>("/api/auth/login", {
+      method: "POST",
+      body: JSON.stringify({ email, password }),
+    });
+
+    return data;
+  }
+
+  async logout(): Promise<void> {
+    await this.request("/api/auth/logout", {
+      method: "POST",
+    });
+  }
+
+  // And getMe method:
+  async getMe(): Promise<{ user: User }> {
+    return this.request<{ user: User }>("/api/auth/me");
+  }
+
+  // Add to api-client.ts, after other methods:
+
+  // User management methods
+  async getUsers(params?: { page?: number; limit?: number }): Promise<{
+    users: User[];
+    pagination: {
+      total: number;
+      page: number;
+      limit: number;
+      totalPages: number;
+    };
+  }> {
+    const query = new URLSearchParams();
+    if (params?.page) query.set("page", params.page.toString());
+    if (params?.limit) query.set("limit", params.limit.toString());
+
+    return this.request<{
+      users: User[];
+      pagination: {
+        total: number;
+        page: number;
+        limit: number;
+        totalPages: number;
+      };
+    }>(`/api/users?${query.toString()}`);
+  }
+
+  async updateUserRole(id: string, role: string): Promise<User> {
+    return this.request<User>(`/api/users/${id}`, {
+      method: "PUT",
+      body: JSON.stringify({ role }),
+    });
+  }
+
+  // Add this method after other API methods in ApiClient class:
+  async getStats(): Promise<{
+    users: { total: number };
+    products: { total: number };
+    categories: { total: number };
+    updatedAt: string;
+  }> {
+    return this.request("/api/admin/stats");
+  }
+}
 
 export const apiClient = new ApiClient();
