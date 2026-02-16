@@ -190,7 +190,7 @@ router.put('/:id', authenticate, requireRole(['ADMIN']), async (req, res) => {
   const updateInput: Partial<ProductInput> = req.body;
 
   const existingProduct = await prisma.product.findUnique({
-    where: { id },
+    where: { id: id as string  },
   });
 
   if (!existingProduct) {
@@ -200,7 +200,7 @@ router.put('/:id', authenticate, requireRole(['ADMIN']), async (req, res) => {
   const updateData = buildProductUpdateData(updateInput);
 
   const updatedProduct = await prisma.product.update({
-    where: { id },
+    where: { id: id as string  },
     data: updateData,
   });
 
@@ -221,7 +221,7 @@ router.delete('/:id', authenticate, requireRole(['ADMIN']), async (req, res) => 
 
     // Verify product exists
     const existingProduct = await prisma.product.findUnique({
-      where: { id },
+      where: { id: id as string  },
     });
 
     if (!existingProduct) {
@@ -230,7 +230,7 @@ router.delete('/:id', authenticate, requireRole(['ADMIN']), async (req, res) => 
 
     // Soft delete: mark as unavailable
     await prisma.product.update({
-      where: { id },
+      where: { id: id as string  },
       data: { isAvailable: false },
     });
 

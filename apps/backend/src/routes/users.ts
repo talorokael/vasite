@@ -58,7 +58,7 @@ router.put('/:id', authenticate, requireRole(['ADMIN']), async (req, res) => {
     }
 
     const existingUser = await prisma.user.findUnique({
-      where: { id }
+      where: { id: id as string  }
     });
 
     if (!existingUser) {
@@ -66,7 +66,7 @@ router.put('/:id', authenticate, requireRole(['ADMIN']), async (req, res) => {
     }
 
     const updatedUser = await prisma.user.update({
-      where: { id },
+      where: { id: id as string  },
       data: { role },
       select: {
         id: true,
