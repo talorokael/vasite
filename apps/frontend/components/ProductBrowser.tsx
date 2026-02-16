@@ -1,7 +1,7 @@
 'use client'; // 👈 THIS IS CRITICAL
 import { useState } from 'react';
 import { Product, Category } from '../types';
-import CategoryFilter from '../components/CategoryFilter';
+import CategoryFilter from './CategoryFilter';
 
 interface ProductBrowserProps {
   initialProducts: Product[];

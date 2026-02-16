@@ -22,7 +22,7 @@
     "baseUrl": ".",
     "paths": {
       "@/*": ["./*"],
-      "shared-types": ["packages/shared-types/src/index.ts"]
+      "shared-types": ["../../packages/shared-types/index.ts"]
     }
   },
   "include": [
