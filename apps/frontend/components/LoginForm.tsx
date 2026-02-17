@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useAuth } from '../lib/AuthContext';
 import { useRouter } from 'next/navigation';
 
@@ -8,15 +8,23 @@ export default function LoginForm() {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [error, setError] = useState('');
-  const { login, isLoading } = useAuth();
+  const { user, login, isLoading } = useAuth();
   const router = useRouter();
+
+  // Redirect if user is already logged in (client‑side)
+  useEffect(() => {
+    if (user) {
+      router.push(user.role === 'ADMIN' ? '/admin' : '/');
+    }
+  }, [user, router]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setError('');
     try {
       const response = await login(email, password);
-      // ✅ Check role from the returned user object
+      // The useEffect above will handle the redirect once `user` is updated.
+      // We still push here for immediate feedback, but the effect is a safety net.
       if (response.user.role === 'ADMIN') {
         router.push('/admin');
       } else {
