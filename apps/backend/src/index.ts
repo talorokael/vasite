@@ -15,6 +15,7 @@ import statsRouter from './routes/stats.js';
 import cookieParser from 'cookie-parser';
 
 const app = express();
+app.set('trust proxy', 1);
 const port = process.env.PORT || 3001;
 
 /**
