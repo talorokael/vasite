@@ -9,8 +9,8 @@ const setSessionCookie = (res: express.Response, token: string) => {
   
   res.cookie('session_token', token, {
     httpOnly: true,
-    secure: isProduction, // HTTPS only in production
-    sameSite: isProduction ? 'strict' : 'lax',
+    secure: isProduction, 
+    sameSite: isProduction ? 'none' : 'lax',
     maxAge: SESSION_DURATION_MS,
     path: '/',
   });
@@ -132,7 +132,7 @@ router.post('/logout', async (req, res) => {
     res.clearCookie('session_token', {
       httpOnly: true,
       secure: process.env.NODE_ENV === 'production',
-      sameSite: 'strict',
+      sameSite: process.env.NODE_ENV === 'production' ? 'none' : 'lax',
       path: '/',
     });
     
