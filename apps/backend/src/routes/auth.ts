@@ -35,40 +35,42 @@ const loginSchema = z.object({
  * Creates a new user account and initial session.
  */
 router.post('/register', async (req, res) => {
+  const requestId = req.id || 'no-id';
+  console.log(`[${requestId}] [POST /register] Started`, req.body.email);
+
   try {
-    // 1. Validate request body
     const validatedData = registerSchema.parse(req.body);
     const { email, name, password } = validatedData;
 
-    // 2. Check if user already exists
+    console.log(`[${requestId}] [POST /register] Validated:`, { email, name });
+
     const existingUser = await prisma.user.findUnique({ where: { email } });
     if (existingUser) {
+      console.log(`[${requestId}] [POST /register] User already exists:`, email);
       return res.status(409).json({ error: 'A user with this email already exists' });
     }
 
-    // 3. Hash password and create user
     const passwordHash = await hashPassword(password);
     const user = await prisma.user.create({
-      data: {
-        email,
-        name: name || null, // Convert undefined to null
-        passwordHash,
-      },
-      select: { id: true, email: true, name: true, role: true }, // Never return passwordHash
+      data: { email, name: name || null, passwordHash },
+      select: { id: true, email: true, name: true, role: true },
     });
 
-    // 4. Create initial session for the new user
+    console.log(`[${requestId}] [POST /register] User created:`, user.id, user.email);
+
     const session = await createSession(user.id);
+    console.log(`[${requestId}] [POST /register] Session created:`, session.token.substring(0,10), 'expires:', session.expiresAt);
 
-    // 5. Return user info and session token
     setSessionCookie(res, session.token);
-    res.json({ user });
+    console.log(`[${requestId}] [POST /register] Cookie set, returning user`);
 
+    res.json({ user });
   } catch (error) {
     if (error instanceof z.ZodError) {
+      console.log(`[${requestId}] [POST /register] Validation error:`, error.issues);
       return res.status(400).json({ error: 'Invalid input', details: error.issues });
     }
-    console.error('Registration error:', error);
+    console.error(`[${requestId}] [POST /register] Error:`, error);
     res.status(500).json({ error: 'Internal server error during registration' });
   }
 });
@@ -149,21 +151,31 @@ router.post('/logout', async (req, res) => {
  * Protected route - requires valid session token.
  */
 router.get('/me', async (req, res) => {
+  const requestId = req.id || 'no-id';
+  console.log(`[${requestId}] [GET /me] Started`);
+
   try {
     const token = req.cookies?.session_token || req.headers.authorization?.replace('Bearer ', '');
-    
+    console.log(`[${requestId}] [GET /me] Token from cookie:`, token ? `${token.substring(0,10)}...` : 'none');
+    console.log(`[${requestId}] [GET /me] All cookies:`, req.cookies);
+
     if (!token) {
+      console.log(`[${requestId}] [GET /me] No token → 401`);
       return res.status(401).json({ error: 'Authentication required' });
     }
 
     const session = await validateSession(token);
+    console.log(`[${requestId}] [GET /me] validateSession result:`, session ? 'valid' : 'invalid');
+
     if (!session) {
+      console.log(`[${requestId}] [GET /me] Session invalid/expired → 401`);
       return res.status(401).json({ error: 'Invalid or expired session' });
     }
 
+    console.log(`[${requestId}] [GET /me] User found:`, session.user.id, session.user.email, 'Role:', session.user.role);
     res.json({ user: session.user });
   } catch (error) {
-    console.error('Me endpoint error:', error);
+    console.error(`[${requestId}] [GET /me] Error:`, error);
     res.status(500).json({ error: 'Internal server error' });
   }
 });

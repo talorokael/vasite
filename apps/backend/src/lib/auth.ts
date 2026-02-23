@@ -37,6 +37,10 @@ export async function verifyPassword(
 export async function createSession(userId: string) {
   const token = crypto.randomBytes(32).toString('hex');
   const expiresAt = new Date(Date.now() + SESSION_DURATION_MS);
+  const tokenPrefix = token.substring(0, 8);
+
+  console.log(`[auth:createSession] Creating session for user ${userId}, token prefix ${tokenPrefix}, expires ${expiresAt.toISOString()}`);
+
 
   const session = await prisma.session.create({
     data: {
@@ -56,6 +60,10 @@ export async function createSession(userId: string) {
  * @returns The validated Session object (with user relation) or null if invalid.
  */
 export async function validateSession(token: string) {
+  const tokenPrefix = token.substring(0, 8);
+  console.log(`[auth:validateSession] Validating token prefix ${tokenPrefix}`);
+
+
   const session = await prisma.session.findUnique({
     where: { token },
     include: {
@@ -72,9 +80,20 @@ export async function validateSession(token: string) {
   });
 
   // Check if session exists, is not expired, and user still exists
-  if (!session || session.expiresAt < new Date()) {
-     return null;
+  if (!session) {
+    console.log(`[auth:validateSession] Token prefix ${tokenPrefix} not found in database`);
+    return null;
   }
+
+  console.log(`[auth:validateSession] Session found for user ${session.user.id} (${session.user.email}), expires ${session.expiresAt.toISOString()}`);
+
+  const now = new Date();
+  if (session.expiresAt < now) {
+    console.log(`[auth:validateSession] Session expired: expires ${session.expiresAt.toISOString()} < now ${now.toISOString()}`);
+    return null;
+  }
+
+  console.log(`[auth:validateSession] Session valid, returning user ${session.user.id}`);
 
   return {
     id: session.id,
