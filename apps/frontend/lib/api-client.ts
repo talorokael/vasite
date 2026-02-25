@@ -4,19 +4,34 @@ import { Product, User, Category } from "../types";
 const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:3001";
 
 export class ApiClient {
+  private token: string | null = null; // 👈 add private token storage
+
+  setToken(token: string) {
+    this.token = token;
+  }
+
+  clearToken() {
+    this.token = null;
+  }
+
   private async request<T>(
     endpoint: string,
     options: RequestInit = {},
   ): Promise<T> {
     const url = `${API_BASE_URL}${endpoint}`;
 
+    const headers: Record<string, string> = {
+    "Content-Type": "application/json",
+    ...(options.headers as Record<string, string> || {}),
+  };
+    if (this.token) {
+      headers['Authorization'] = `Bearer ${this.token}`;
+    }
+
     const response = await fetch(url, {
       ...options,
       credentials: "include",
-      headers: {
-        "Content-Type": "application/json",
-        ...options.headers,
-      },
+      headers,
     });
 
     // Handle 204 No Content
@@ -118,6 +133,7 @@ export class ApiClient {
       method: "POST",
       body: JSON.stringify({ email, password, name }),
     });
+    this.setToken(data.token);
     return data;
   }
 
@@ -126,6 +142,7 @@ export class ApiClient {
       method: "POST",
       body: JSON.stringify({ email, password }),
     });
+    this.setToken(data.token);
     return data;
   }
 
@@ -133,6 +150,7 @@ export class ApiClient {
     await this.request("/api/auth/logout", {
       method: "POST",
     });
+    this.clearToken();
   }
 
   async getMe(): Promise<{ user: User }> {
