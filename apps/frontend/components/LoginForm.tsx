@@ -24,8 +24,10 @@ export default function LoginForm() {
   setError('');
   try {
     const response = await login(email, password);
-    // Store token in client‑side cookie
+    console.log('✅ Token from login:', response.token);
+
     setClientToken(response.token);
+    console.log('🍪 document.cookie after set:', document.cookie);
     
     if (response.user.role === 'ADMIN') {
       router.push('/admin');
