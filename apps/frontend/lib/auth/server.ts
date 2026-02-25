@@ -1,31 +1,30 @@
 // apps/frontend/lib/auth/server.ts
 import { cookies } from "next/headers";
 import { User } from "@/types";
-import { randomUUID } from 'crypto'; 
+import { randomUUID } from 'crypto';
 
 export async function getServerSession(): Promise<{ user: User } | null> {
-  const requestId = randomUUID().slice(0,8); // short ID for traceability
+  const requestId = randomUUID().slice(0,8);
   const cookieStore = await cookies();
   const sessionToken = cookieStore.get("session_token")?.value;
 
   console.log(`[${requestId}] [server.ts] Cookie present:`, !!sessionToken);
   console.log(`[${requestId}] [server.ts] Cookie value (first 10 chars):`, sessionToken?.substring(0, 10));
-  console.log(`[${requestId}] [server.ts] Cookie header being sent (first 8 chars):`, sessionToken ? `session_token=${sessionToken.substring(0,8)}...` : '(none)');
 
   if (!sessionToken) {
     console.log(`[${requestId}] [server.ts] No session token → returning null`);
     return null;
   }
 
-  
-  const url = `/api/auth/me`;
+  const API_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:3001";
+  const url = `${API_URL}/api/auth/me`;
   console.log(`[${requestId}] [server.ts] Fetching from:`, url);
 
   const start = Date.now();
   try {
     const response = await fetch(url, {
       headers: {
-        Cookie: `session_token=${sessionToken}`,
+        'Authorization': `Bearer ${sessionToken}`,
       },
       cache: "no-store",
     });
