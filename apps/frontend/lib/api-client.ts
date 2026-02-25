@@ -1,10 +1,7 @@
 // apps/frontend/lib/api-client.ts
 import { Product, User, Category } from "../types";
 
-const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:3001";
-
-
-
+const API_BASE_URL = '';
 export class ApiClient {
   private async request<T>(
   endpoint: string,

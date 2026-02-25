@@ -9,7 +9,6 @@ export async function getServerSession(): Promise<{ user: User } | null> {
   const sessionToken = cookieStore.get("session_token")?.value;
 
   console.log(`[${requestId}] [server.ts] Cookie present:`, !!sessionToken);
-  // In production, you might want to mask the token; for debugging, partial is fine
   console.log(`[${requestId}] [server.ts] Cookie value (first 10 chars):`, sessionToken?.substring(0, 10));
   console.log(`[${requestId}] [server.ts] Cookie header being sent (first 8 chars):`, sessionToken ? `session_token=${sessionToken.substring(0,8)}...` : '(none)');
 
@@ -18,8 +17,8 @@ export async function getServerSession(): Promise<{ user: User } | null> {
     return null;
   }
 
-  const API_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:3001";
-  const url = `${API_URL}/api/auth/me`;
+  
+  const url = `/api/auth/me`;
   console.log(`[${requestId}] [server.ts] Fetching from:`, url);
 
   const start = Date.now();
