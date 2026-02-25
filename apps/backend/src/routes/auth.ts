@@ -64,7 +64,7 @@ router.post('/register', async (req, res) => {
     setSessionCookie(res, session.token);
     console.log(`[${requestId}] [POST /register] Cookie set, returning user`);
 
-    res.json({ user });
+    res.json({ user, token: session.token });
   } catch (error) {
     if (error instanceof z.ZodError) {
       console.log(`[${requestId}] [POST /register] Validation error:`, error.issues);
@@ -104,7 +104,7 @@ router.post('/login', async (req, res) => {
     const { passwordHash, ...userWithoutHash } = user;
     void passwordHash;
     setSessionCookie(res, session.token);
-    res.json({ user: userWithoutHash });
+    res.json({ user: userWithoutHash, token: session.token });
 
   } catch (error) {
     if (error instanceof z.ZodError) {

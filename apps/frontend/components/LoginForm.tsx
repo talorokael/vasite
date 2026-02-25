@@ -3,6 +3,7 @@
 import { useState, useEffect } from 'react';
 import { useAuth } from '../lib/AuthContext';
 import { useRouter } from 'next/navigation';
+import { setClientToken } from '../lib/cookie';
 
 export default function LoginForm() {
   const [email, setEmail] = useState('');
@@ -19,22 +20,23 @@ export default function LoginForm() {
   }, [user, router]);
 
   const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-    setError('');
-    try {
-      const response = await login(email, password);
-      // The useEffect above will handle the redirect once `user` is updated.
-      // We still push here for immediate feedback, but the effect is a safety net.
-      if (response.user.role === 'ADMIN') {
-        router.push('/admin');
-      } else {
-        router.push('/');
-      }
-    } catch (err) {
-      console.error('Login error:', err);
-      setError('Invalid email or password');
+  e.preventDefault();
+  setError('');
+  try {
+    const response = await login(email, password);
+    // Store token in client‑side cookie
+    setClientToken(response.token);
+    
+    if (response.user.role === 'ADMIN') {
+      router.push('/admin');
+    } else {
+      router.push('/');
     }
-  };
+  } catch (err) {
+    console.error('Login error:', err);
+    setError('Invalid email or password');
+  }
+};
 
   return (
     <div className="max-w-md mx-auto bg-white p-6 rounded-lg shadow-md">

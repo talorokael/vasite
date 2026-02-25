@@ -7,8 +7,8 @@ import { apiClient } from './api-client';
 interface AuthContextType {
   user: User | null;
   isLoading: boolean;
-  login: (email: string, password: string) => Promise<{ user: User }>; 
-  register: (email: string, password: string, name?: string) => Promise<{ user: User }>;
+  login: (email: string, password: string) => Promise<{ user: User; token: string }>; 
+  register: (email: string, password: string, name?: string) => Promise<{ user: User; token: string }>;
   logout: () => Promise<void>;
 }
 

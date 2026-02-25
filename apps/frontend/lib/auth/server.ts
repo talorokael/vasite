@@ -6,7 +6,7 @@ import { randomUUID } from 'crypto';
 export async function getServerSession(): Promise<{ user: User } | null> {
   const requestId = randomUUID().slice(0,8);
   const cookieStore = await cookies();
-  const sessionToken = cookieStore.get("session_token")?.value;
+  const sessionToken = cookieStore.get("client_token")?.value;
 
   console.log(`[${requestId}] [server.ts] Cookie present:`, !!sessionToken);
   console.log(`[${requestId}] [server.ts] Cookie value (first 10 chars):`, sessionToken?.substring(0, 10));

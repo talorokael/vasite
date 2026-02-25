@@ -3,6 +3,7 @@
 import { useState, useEffect } from "react";
 import { useAuth } from "../lib/AuthContext";
 import { useRouter } from "next/navigation";
+import { setClientToken } from '../lib/cookie';
 
 export default function RegisterForm() {
   const [email, setEmail] = useState("");
@@ -20,21 +21,22 @@ export default function RegisterForm() {
   }, [user, router]);
 
   const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-    setError("");
-    try {
-      const response = await register(email, password, name);
-      // The useEffect above will handle the redirect once `user` is updated.
-      if (response.user.role === "ADMIN") {
-        router.push("/admin");
-      } else {
-        router.push("/");
-      }
-    } catch (err) {
-      console.error("Registration error:", err);
-      setError("Registration failed. Please try again.");
+  e.preventDefault();
+  setError('');
+  try {
+    const response = await register(email, password, name);
+    setClientToken(response.token);
+    
+    if (response.user.role === 'ADMIN') {
+      router.push('/admin');
+    } else {
+      router.push('/');
     }
-  };
+  } catch (err) {
+    console.error('Registration error:', err);
+    setError('Registration failed. Please try again.');
+  }
+};
 
   return (
     <div className="max-w-md mx-auto bg-white p-6 rounded-lg shadow-md">

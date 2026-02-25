@@ -113,16 +113,16 @@ export class ApiClient {
     email: string,
     password: string,
     name?: string,
-  ): Promise<{ user: User }> {
-    const data = await this.request<{ user: User }>("/api/auth/register", {
+  ): Promise<{ user: User; token: string }> {
+    const data = await this.request<{ user: User; token: string }>("/api/auth/register", {
       method: "POST",
       body: JSON.stringify({ email, password, name }),
     });
     return data;
   }
 
-  async login(email: string, password: string): Promise<{ user: User }> {
-    const data = await this.request<{ user: User }>("/api/auth/login", {
+  async login(email: string, password: string): Promise<{ user: User; token: string }> {
+    const data = await this.request<{ user: User; token: string }>("/api/auth/login", {
       method: "POST",
       body: JSON.stringify({ email, password }),
     });

@@ -17,6 +17,7 @@ model User {
   updatedAt    DateTime  @updatedAt
   products     Product[]
   sessions     Session[]
+  
 
   @@map("users")
 }
