@@ -1,11 +1,10 @@
 // apps/frontend/lib/api-client.ts
 import { Product, User, Category } from "../types";
-import { getCookie } from "./cookie";
 
 const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:3001";
 
 export class ApiClient {
-  private token: string | null = null;
+  private token: string | null = null; // 👈 add private token storage
 
   setToken(token: string) {
     this.token = token;
@@ -21,19 +20,12 @@ export class ApiClient {
   ): Promise<T> {
     const url = `${API_BASE_URL}${endpoint}`;
 
-    if (!this.token) {
-      const tokenFromCookie = getCookie("client_token");
-      if (tokenFromCookie) {
-        this.token = tokenFromCookie;
-      }
-    }
-
     const headers: Record<string, string> = {
-      "Content-Type": "application/json",
-      ...((options.headers as Record<string, string>) || {}),
-    };
+    "Content-Type": "application/json",
+    ...(options.headers as Record<string, string> || {}),
+  };
     if (this.token) {
-      headers["Authorization"] = `Bearer ${this.token}`;
+      headers['Authorization'] = `Bearer ${this.token}`;
     }
 
     const response = await fetch(url, {
@@ -137,28 +129,19 @@ export class ApiClient {
     password: string,
     name?: string,
   ): Promise<{ user: User; token: string }> {
-    const data = await this.request<{ user: User; token: string }>(
-      "/api/auth/register",
-      {
-        method: "POST",
-        body: JSON.stringify({ email, password, name }),
-      },
-    );
+    const data = await this.request<{ user: User; token: string }>("/api/auth/register", {
+      method: "POST",
+      body: JSON.stringify({ email, password, name }),
+    });
     this.setToken(data.token);
     return data;
   }
 
-  async login(
-    email: string,
-    password: string,
-  ): Promise<{ user: User; token: string }> {
-    const data = await this.request<{ user: User; token: string }>(
-      "/api/auth/login",
-      {
-        method: "POST",
-        body: JSON.stringify({ email, password }),
-      },
-    );
+  async login(email: string, password: string): Promise<{ user: User; token: string }> {
+    const data = await this.request<{ user: User; token: string }>("/api/auth/login", {
+      method: "POST",
+      body: JSON.stringify({ email, password }),
+    });
     this.setToken(data.token);
     return data;
   }
