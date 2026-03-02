@@ -4,8 +4,10 @@ import { Product } from "@/types";
 import { useState, useEffect, useCallback } from "react";
 import Link from "next/link";
 import { apiClient } from "@/lib/api-client";
+import { useAuth } from "@/lib/AuthContext";
 
 export default function ProductsTable() {
+  const { user } = useAuth();
   const [products, setProducts] = useState<Product[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [currentPage, setCurrentPage] = useState(1);
@@ -15,6 +17,7 @@ export default function ProductsTable() {
   const [showDeleted, setShowDeleted] = useState(false);
 
   const fetchProducts = useCallback(async () => {
+    if (!user) return;
     setIsLoading(true);
     try {
       const response = await apiClient.getProducts({
@@ -35,7 +38,7 @@ export default function ProductsTable() {
     } finally {
       setIsLoading(false);
     }
-  }, [currentPage, itemsPerPage, showDeleted]);
+  }, [currentPage, itemsPerPage, showDeleted, user]);
 
   useEffect(() => {
     fetchProducts();

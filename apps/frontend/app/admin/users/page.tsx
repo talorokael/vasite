@@ -2,32 +2,37 @@
 'use client';
 
 import { useState, useEffect } from 'react';
+import { useAuth } from '@/lib/AuthContext';
 import { apiClient } from '../../../lib/api-client';
 import { User } from '../../../types';
 
 export default function AdminUsersPage() {
+  const { user } = useAuth();
   const [users, setUsers] = useState<User[]>([]);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    loadUsers();
-  }, []);
+    if (!user) return;
 
-  const loadUsers = async () => {
-    try {
-      const response = await apiClient.getUsers();
-      setUsers(response.users);
-    } catch (error) {
-      console.error('Failed to load users:', error);
-    } finally {
-      setLoading(false);
-    }
-  };
+    const loadUsers = async () => {
+      try {
+        const response = await apiClient.getUsers();
+        setUsers(response.users);
+      } catch (error) {
+        console.error('Failed to load users:', error);
+      } finally {
+        setLoading(false);
+      }
+    };
+    loadUsers();
+  }, [user]);
 
   const updateUserRole = async (id: string, role: string) => {
     try {
       await apiClient.updateUserRole(id, role);
-      loadUsers(); // Refresh
+      
+      const response = await apiClient.getUsers();
+      setUsers(response.users);
     } catch (error) {
       console.error('Failed to update user:', error);
       alert('Failed to update user role');

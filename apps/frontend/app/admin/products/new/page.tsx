@@ -4,8 +4,10 @@ import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { apiClient } from '@/lib/api-client';
 import { Category } from 'shared-types';
+import { useAuth } from '@/lib/AuthContext';
 
 export default function NewProductPage() {
+  const { user } = useAuth();
   const router = useRouter();
   const [categories, setCategories] = useState<Category[]>([]);
   const [loading, setLoading] = useState(false);
@@ -23,17 +25,18 @@ export default function NewProductPage() {
   });
 
   useEffect(() => {
-    loadCategories();
-  }, []);
+    if (!user) return; // 👈 wait for user
 
-  const loadCategories = async () => {
-    try {
-      const data = await apiClient.getCategories();
-      setCategories(data);
-    } catch (error) {
-      console.error('Failed to load categories:', error);
-    }
-  };
+    const loadCategories = async () => {
+      try {
+        const data = await apiClient.getCategories();
+        setCategories(data);
+      } catch (error) {
+        console.error('Failed to load categories:', error);
+      }
+    };
+    loadCategories();
+  }, [user]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();

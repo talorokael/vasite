@@ -5,8 +5,10 @@ import { useRouter, useParams } from 'next/navigation';
 import { apiClient } from '@/lib/api-client';
 import { Category, Product } from 'shared-types'; 
 import { useCallback } from 'react';
+import { useAuth } from '@/lib/AuthContext';
 
 export default function EditProductPage() {
+  const { user } = useAuth();
   const router = useRouter();
   const params = useParams();
   const productId = params.id as string;
@@ -30,6 +32,7 @@ export default function EditProductPage() {
   
 
   const loadData = useCallback(async () => {
+    if (!user) return;
     try {
       // Load categories
       const categoriesData = await apiClient.getCategories();
@@ -61,7 +64,7 @@ export default function EditProductPage() {
       console.error('Failed to load data:', error);
       alert('Failed to load product data');
     }
-  }, [productId, router]);
+  }, [productId, router, user]);
 
   useEffect(() => {
     loadData();

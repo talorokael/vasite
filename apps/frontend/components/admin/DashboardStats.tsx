@@ -2,7 +2,8 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { apiClient } from '../../lib/api-client';
+import { useAuth } from '@/lib/AuthContext';
+import { apiClient } from '@/lib/api-client';
 
 interface Stats {
   users: { total: number };
@@ -12,23 +13,25 @@ interface Stats {
 }
 
 export default function DashboardStats() {
+  const { user } = useAuth();
   const [stats, setStats] = useState<Stats | null>(null);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    loadStats();
-  }, []);
+    if (!user) return; // Wait for authentication
 
-  const loadStats = async () => {
-    try {
-      const data = await apiClient.getStats();
-      setStats(data);
-    } catch (error) {
-      console.error('Failed to load stats:', error);
-    } finally {
-      setLoading(false);
-    }
-  };
+    const loadStats = async () => {
+      try {
+        const data = await apiClient.getStats();
+        setStats(data);
+      } catch (error) {
+        console.error('Failed to load stats:', error);
+      } finally {
+        setLoading(false);
+      }
+    };
+    loadStats();
+  }, [user]);
 
   if (loading) {
     return <div>Loading stats...</div>;
