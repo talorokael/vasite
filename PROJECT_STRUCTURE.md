@@ -175,3 +175,27 @@ CI & Dev
 Notes
 - This tree mirrors the attached workspace snapshot and includes the sample `.env` values you provided. If you'd like I can expand any subtree (e.g., show every file inside `.next/` or list migration SQL contents).
 
+## Auth, recent fixes, and deployment notes
+
+Auth flow (current)
+- Backend creates secure sessions (Prisma sessions) and sets an HttpOnly cookie `session_token` **and** returns the raw token in JSON for client-side convenience.
+- Frontend stores a readable cookie `client_token` (via apps/frontend/lib/cookie.ts) and sets the token in memory on the ApiClient (`apiClient.setToken(token)`).
+- Client-side API calls use `Authorization: Bearer <token>` (api-client) and include credentials.
+- Server-side Next helper (`apps/frontend/lib/auth/server.ts`) reads `client_token` from Next cookies and forwards it as `Authorization` when calling the backend `/api/auth/me` endpoint (this enables SSR/server components to detect the user).
+- Admin components guard fetching with `if (!user) return;` to avoid race conditions.
+
+Recent fixes summary
+- Login/register now return `{ user, token }` and set `session_token`.
+- Added `client_token` cookie and `apiClient.setToken()` so SSR + client fetches use the same token.
+- Guarded data-fetching components to wait for AuthProvider initialization.
+- Removed problematic cross-domain cookie setting; rely on SameSite/Secure and platform env variables.
+
+Deployment notes
+- Frontend (Vercel): https://vasite-frontend.vercel.app
+  - NEXT_PUBLIC_API_URL = https://backend-production-dfc8.up.railway.app
+- Backend (Railway): https://backend-production-dfc8.up.railway.app
+  - Railway DATABASE_URL (example): postgresql://postgres:...@postgres.railway.internal:5432/railway
+  - FRONTEND_URL = https://vasite-frontend.vercel.app
+
+Security note
+- Current approach uses a readable `client_token` to enable SSR convenience. For maximum security consider switching to an HttpOnly-first strategy with server-side cookie forwarding or refresh-tokens to avoid exposing tokens to JS.
