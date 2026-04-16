@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import "./globals.css";
-import { AuthProvider } from '../lib/AuthContext';
+import { AuthProvider } from "../lib/AuthContext";
+import { CartProvider } from "@/lib/CartContext";
 
 export const metadata: Metadata = {
   title: "VerdeAfrique",
@@ -15,10 +16,9 @@ export default function RootLayout({
   return (
     <html lang="en">
       <body className="antialiased">
-        <AuthProvider> {/* Wrap with AuthProvider */}
-          {children}
+        <AuthProvider>
+          <CartProvider>{children}</CartProvider>
         </AuthProvider>
-
       </body>
     </html>
   );

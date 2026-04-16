@@ -3,6 +3,7 @@ import express from 'express';
 import cors from 'cors';
 import helmet from 'helmet';
 import rateLimit from 'express-rate-limit';
+import cartRoutes from './routes/cart.js';
 
 
 // Import routes
@@ -69,6 +70,7 @@ app.use('/api/categories', categoriesRoutes);
 app.use('/api/products', productRoutes);
 app.use('/api/users', usersRouter);
 app.use('/api/admin/stats', statsRouter);
+app.use('/api/cart', cartRoutes);
 
 /**
  * HEALTH CHECK

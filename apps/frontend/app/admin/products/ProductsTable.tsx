@@ -1,69 +1,56 @@
 "use client";
+import Image from 'next/image';
 
 import { Product } from "@/types";
-import { useState, useEffect, useCallback } from "react";
+import { useState } from "react";
 import Link from "next/link";
+import useSWR from "swr";
 import { apiClient } from "@/lib/api-client";
 import { useAuth } from "@/lib/AuthContext";
 
+interface ProductsResponse {
+  products: Product[];
+  pagination: {
+    total: number;
+    page: number;
+    limit: number;
+    totalPages: number;
+  };
+}
+
 export default function ProductsTable() {
   const { user } = useAuth();
-  const [products, setProducts] = useState<Product[]>([]);
-  const [isLoading, setIsLoading] = useState(true);
   const [currentPage, setCurrentPage] = useState(1);
-  const [totalPages, setTotalPages] = useState(1);
   const [itemsPerPage, setItemsPerPage] = useState(20);
-  const [totalItems, setTotalItems] = useState(0);
   const [showDeleted, setShowDeleted] = useState(false);
 
-  const fetchProducts = useCallback(async () => {
-    if (!user) return;
-    setIsLoading(true);
-    try {
-      const response = await apiClient.getProducts({
+  const { data, error, isLoading, mutate } = useSWR<ProductsResponse>(
+    user ? `/api/products?page=${currentPage}&limit=${itemsPerPage}` : null,
+    async () => {
+      return await apiClient.getProducts({
         page: currentPage,
         limit: itemsPerPage,
       });
+    },
+    { keepPreviousData: true },
+  );
 
-      // Filter based on showDeleted toggle
-      const filteredProducts = showDeleted
-        ? response.products
-        : response.products.filter((product) => product.isAvailable);
+  const products: Product[] = showDeleted
+    ? data?.products || []
+    : data?.products?.filter((p) => p.isAvailable) || [];
 
-      setProducts(filteredProducts);
-      setTotalPages(response.pagination.totalPages);
-      setTotalItems(response.pagination.total);
-    } catch (error) {
-      console.error("Failed to fetch products:", error);
-    } finally {
-      setIsLoading(false);
-    }
-  }, [currentPage, itemsPerPage, showDeleted, user]);
-
-  useEffect(() => {
-    fetchProducts();
-  }, [fetchProducts]);
+  const totalPages = data?.pagination?.totalPages || 1;
+  const totalItems = data?.pagination?.total || 0;
 
   const handlePageChange = (newPage: number) => {
-    if (newPage >= 1 && newPage <= totalPages) {
-      setCurrentPage(newPage);
-    }
+    if (newPage >= 1 && newPage <= totalPages) setCurrentPage(newPage);
   };
 
   const handleDelete = async (productId: string) => {
     if (!confirm("Are you sure you want to delete this product?")) return;
-
     try {
       await apiClient.deleteProduct(productId);
-
-      // If not showing deleted, remove from UI immediately
-      if (!showDeleted) {
-        setProducts((prev) => prev.filter((p) => p.id !== productId));
-        setTotalItems((prev) => prev - 1);
-      } else {
-        // If showing deleted, just refresh to update status
-        fetchProducts();
-      }
+      mutate(); // revalidate
     } catch (error: unknown) {
       console.error("Failed to delete product:", error);
       const message = error instanceof Error ? error.message : "Unknown error";
@@ -71,9 +58,9 @@ export default function ProductsTable() {
     }
   };
 
-  if (isLoading) {
-    return <div className="p-8">Loading products...</div>;
-  }
+  if (isLoading) return <div className="p-8">Loading products...</div>;
+  if (error)
+    return <div className="p-8 text-red-600">Failed to load products</div>;
 
   return (
     <div className="p-6">
@@ -153,6 +140,9 @@ export default function ProductsTable() {
           <thead className="bg-gray-50">
             <tr>
               <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">
+                Image
+              </th>
+              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">
                 Name
               </th>
               <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">
@@ -174,6 +164,20 @@ export default function ProductsTable() {
             {products.map((product) => (
               <tr key={product.id}>
                 <td className="px-6 py-4">
+                  {product.images && product.images[0] ? (
+                    <div className="relative w-12 h-12">
+                      <Image
+                        src={product.images[0]}
+                        alt={product.name}
+                        fill
+                        className="object-cover rounded"
+                      />
+                    </div>
+                  ) : (
+                    <div className="w-12 h-12 bg-gray-100 rounded"></div>
+                  )}
+                </td>
+                <td className="px-6 py-4">
                   <div className="font-medium text-gray-900">
                     {product.name}
                   </div>
@@ -183,15 +187,12 @@ export default function ProductsTable() {
                     </div>
                   )}
                 </td>
-
                 <td className="px-6 py-4">
                   ${(product.price / 100).toFixed(2)}
                 </td>
-
                 <td className="px-6 py-4">
                   {product.categoryName || "Uncategorized"}
                 </td>
-
                 <td className="px-6 py-4">
                   <span
                     className={`px-2 inline-flex text-xs font-semibold rounded-full ${
@@ -203,8 +204,6 @@ export default function ProductsTable() {
                     {product.isAvailable ? "Available" : "Out of Stock"}
                   </span>
                 </td>
-
-                {/* ✅ Correct + guarded actions */}
                 <td className="px-6 py-4 text-sm font-medium">
                   <>
                     <Link

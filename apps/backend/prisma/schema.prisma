@@ -17,6 +17,7 @@ model User {
   updatedAt    DateTime  @updatedAt
   products     Product[]
   sessions     Session[]
+  cart         Cart[]
   
 
   @@map("users")
@@ -31,6 +32,7 @@ model Session {
   user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   @@index([userId])
+  @@index([expiresAt])
   @@map("sessions")
 }
 
@@ -74,8 +76,37 @@ model Product {
   updatedAt      DateTime    @updatedAt
   category       Category?   @relation(fields: [categoryId], references: [id])
   user           User?       @relation(fields: [userId], references: [id])
-
+  items     CartItem[]
+  @@index([isAvailable])
+  @@index([categoryId])
+  @@index([name])
   @@map("products")
+}
+
+model Cart {
+  id        String      @id @default(cuid())
+  userId    String      @unique
+  user      User        @relation(fields: [userId], references: [id], onDelete: Cascade)
+  items     CartItem[]
+  createdAt DateTime    @default(now())
+  updatedAt DateTime    @updatedAt
+  
+
+  @@map("carts")
+}
+
+model CartItem {
+  id        String   @id @default(cuid())
+  cartId    String
+  cart      Cart     @relation(fields: [cartId], references: [id], onDelete: Cascade)
+  productId String
+  product   Product  @relation(fields: [productId], references: [id], onDelete: Cascade)
+  quantity  Int      @default(1)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@unique([cartId, productId])
+  @@map("cart_items")
 }
 
 enum Role {
