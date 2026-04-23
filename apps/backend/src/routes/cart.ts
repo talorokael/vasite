@@ -1,62 +1,146 @@
-import express from "express";
-import { prisma } from "../lib/prisma.js";
-import { authenticate } from "../middleware/auth.js";
+import express from 'express';
+import { prisma } from '../lib/prisma.js';
+import { authenticate } from '../middleware/auth.js';
 
 const router: express.Router = express.Router();
 
-// GET /api/cart – get current user's cart with product details
-router.get("/", authenticate, async (req, res) => {
+// GET /api/cart
+router.get('/', authenticate, async (req, res) => {
   try {
-    if (!req.user) {
-      return res.status(401).json({ error: "Unauthorized" });
-    }
+    if (!req.user) return res.status(401).json({ error: 'Unauthorized' });
     const userId = req.user.id;
+
     let cart = await prisma.cart.findUnique({
       where: { userId },
       include: {
         items: {
-          include: { product: true },
-        },
-      },
+          include: { product: true }
+        }
+      }
     });
+
     if (!cart) {
       cart = await prisma.cart.create({
         data: { userId },
-        include: { items: { include: { product: true } } },
+        include: { items: { include: { product: true } } }
       });
     }
+
     res.json(cart);
   } catch (error) {
-    console.error("Error fetching cart:", error);
-    res.status(500).json({ error: "Failed to fetch cart" });
+    console.error('Error fetching cart:', error);
+    res.status(500).json({ error: 'Failed to fetch cart' });
   }
 });
 
-// POST /api/cart/items – add or update item quantity
-router.post("/items", authenticate, async (req, res) => {
+// POST /api/cart/items
+router.post('/items', authenticate, async (req, res) => {
   const { productId, quantity } = req.body;
-  if (!productId || typeof quantity !== "number" || quantity < 1) {
-    return res.status(400).json({ error: "Invalid productId or quantity" });
+  if (!productId || typeof quantity !== 'number' || quantity < 1) {
+    return res.status(400).json({ error: 'Invalid productId or quantity' });
   }
+
   try {
-    if (!req.user) {
-      return res.status(401).json({ error: "Unauthorized" });
-    }
+    if (!req.user) return res.status(401).json({ error: 'Unauthorized' });
     const userId = req.user.id;
+
     let cart = await prisma.cart.findUnique({ where: { userId } });
     if (!cart) {
       cart = await prisma.cart.create({ data: { userId } });
     }
+
     const cartItem = await prisma.cartItem.upsert({
-      where: { cartId_productId: { cartId: cart.id, productId } },
-      update: { quantity: { increment: quantity } },
-      create: { cartId: cart.id, productId, quantity },
-      include: { product: true },
+      where: {
+        cartId_productId: {
+          cartId: cart.id,
+          productId: productId
+        }
+      },
+      update: {
+        quantity: { increment: quantity }
+      },
+      create: {
+        cartId: cart.id,
+        productId: productId,
+        quantity: quantity
+      },
+      include: { product: true }
     });
+
     res.status(201).json(cartItem);
   } catch (error) {
-    console.error("Error adding to cart:", error);
-    res.status(500).json({ error: "Failed to add item to cart" });
+    console.error('Error adding to cart:', error);
+    res.status(500).json({ error: 'Failed to add item to cart' });
+  }
+});
+
+// PUT /api/cart/items/:id – update quantity
+router.put('/items/:id', authenticate, async (req, res) => {
+  const { id } = req.params;
+  const { quantity } = req.body;
+
+  // Guard: id must exist
+  if (!id) {
+    return res.status(400).json({ error: 'Cart item ID is required' });
+  }
+  if (typeof quantity !== 'number' || quantity < 0) {
+    return res.status(400).json({ error: 'Invalid quantity' });
+  }
+
+  try {
+    if (!req.user) return res.status(401).json({ error: 'Unauthorized' });
+
+    // Fetch cart item WITH its cart relation
+    const cartItem = await prisma.cartItem.findUnique({
+      where: { id },
+      include: { cart: true }   // ✅ include cart so we can check userId
+    });
+
+    if (!cartItem || cartItem.cart.userId !== req.user.id) {
+      return res.status(404).json({ error: 'Cart item not found' });
+    }
+
+    if (quantity === 0) {
+      await prisma.cartItem.delete({ where: { id } });
+    } else {
+      await prisma.cartItem.update({
+        where: { id },
+        data: { quantity }
+      });
+    }
+
+    res.status(200).json({ success: true });
+  } catch (error) {
+    console.error('Error updating cart item:', error);
+    res.status(500).json({ error: 'Failed to update cart item' });
+  }
+});
+
+// DELETE /api/cart/items/:id
+router.delete('/items/:id', authenticate, async (req, res) => {
+  const { id } = req.params;
+
+  if (!id) {
+    return res.status(400).json({ error: 'Cart item ID is required' });
+  }
+
+  try {
+    if (!req.user) return res.status(401).json({ error: 'Unauthorized' });
+
+    const cartItem = await prisma.cartItem.findUnique({
+      where: { id },
+      include: { cart: true }   // ✅ include cart to verify ownership
+    });
+
+    if (!cartItem || cartItem.cart.userId !== req.user.id) {
+      return res.status(404).json({ error: 'Cart item not found' });
+    }
+
+    await prisma.cartItem.delete({ where: { id } });
+    res.status(204).send();
+  } catch (error) {
+    console.error('Error deleting cart item:', error);
+    res.status(500).json({ error: 'Failed to delete cart item' });
   }
 });
 
