@@ -7,7 +7,7 @@
   "scripts": {
     "dev": "tsx watch src/index.ts",
     "build": "tsc",
-    "start": "node dist/index.js",
+    "start": "pnpm exec prisma migrate deploy && node dist/index.js",
     "lint": "eslint .",
     "typecheck": "tsc --noEmit"
   },
