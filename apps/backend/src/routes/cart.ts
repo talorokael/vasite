@@ -4,6 +4,12 @@ import { authenticate } from '../middleware/auth.js';
 
 const router: express.Router = express.Router();
 
+// Helper to ensure id is string
+const getParamId = (id: string | string[] | undefined): string | null => {
+  if (!id || Array.isArray(id)) return null;
+  return id;
+};
+
 // GET /api/cart
 router.get('/', authenticate, async (req, res) => {
   try {
@@ -74,15 +80,13 @@ router.post('/items', authenticate, async (req, res) => {
   }
 });
 
-// PUT /api/cart/items/:id – update quantity
+// PUT /api/cart/items/:id
 router.put('/items/:id', authenticate, async (req, res) => {
-  const { id } = req.params;
-  const { quantity } = req.body;
+  const rawId = req.params.id;
+  const id = getParamId(rawId);
+  if (!id) return res.status(400).json({ error: 'Invalid cart item ID' });
 
-  // Guard: id must exist
-  if (!id) {
-    return res.status(400).json({ error: 'Cart item ID is required' });
-  }
+  const { quantity } = req.body;
   if (typeof quantity !== 'number' || quantity < 0) {
     return res.status(400).json({ error: 'Invalid quantity' });
   }
@@ -90,10 +94,9 @@ router.put('/items/:id', authenticate, async (req, res) => {
   try {
     if (!req.user) return res.status(401).json({ error: 'Unauthorized' });
 
-    // Fetch cart item WITH its cart relation
     const cartItem = await prisma.cartItem.findUnique({
       where: { id },
-      include: { cart: true }   // ✅ include cart so we can check userId
+      include: { cart: true }
     });
 
     if (!cartItem || cartItem.cart.userId !== req.user.id) {
@@ -118,18 +121,16 @@ router.put('/items/:id', authenticate, async (req, res) => {
 
 // DELETE /api/cart/items/:id
 router.delete('/items/:id', authenticate, async (req, res) => {
-  const { id } = req.params;
-
-  if (!id) {
-    return res.status(400).json({ error: 'Cart item ID is required' });
-  }
+  const rawId = req.params.id;
+  const id = getParamId(rawId);
+  if (!id) return res.status(400).json({ error: 'Invalid cart item ID' });
 
   try {
     if (!req.user) return res.status(401).json({ error: 'Unauthorized' });
 
     const cartItem = await prisma.cartItem.findUnique({
       where: { id },
-      include: { cart: true }   // ✅ include cart to verify ownership
+      include: { cart: true }
     });
 
     if (!cartItem || cartItem.cart.userId !== req.user.id) {
