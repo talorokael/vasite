@@ -57,7 +57,7 @@ app.use(cors({
   methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
   allowedHeaders: ['Content-Type', 'Authorization']
 }));
-app.post('/api/webhooks/stripe', express.raw({ type: 'application/json' }), handlePaystackWebhook);
+app.post('/api/webhooks/paystack', express.raw({ type: 'application/json' }), handlePaystackWebhook);
 
 app.use(express.json({ limit: '10mb' }));
 

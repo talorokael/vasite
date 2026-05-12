@@ -7,6 +7,7 @@ const PAYSTACK_SECRET_KEY = process.env.PAYSTACK_SECRET_KEY!;
 const WEBHOOK_SECRET = process.env.PAYSTACK_WEBHOOK_SECRET; // optional but recommended
 
 export const handlePaystackWebhook = async (req: Request, res: Response) => {
+  console.log('🔔 WEBHOOK REACHED THE SERVER');
   // Verify signature if webhook secret is set
   const signature = req.headers['x-paystack-signature'] as string;
   if (WEBHOOK_SECRET) {
