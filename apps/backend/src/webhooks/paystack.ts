@@ -4,16 +4,20 @@ import axios from 'axios';
 import { prisma } from '../lib/prisma.js';
 
 const PAYSTACK_SECRET_KEY = process.env.PAYSTACK_SECRET_KEY!;
-const WEBHOOK_SECRET = process.env.PAYSTACK_WEBHOOK_SECRET; // optional but recommended
+const WEBHOOK_SECRET = process.env.PAYSTACK_WEBHOOK_SECRET;
 
 export const handlePaystackWebhook = async (req: Request, res: Response) => {
   console.log('🔔 WEBHOOK REACHED THE SERVER');
-  // Verify signature if webhook secret is set
+
+  // Get raw body as string (Buffer from express.raw)
+  const rawBody = (req.body as Buffer).toString('utf8');
+
+  // Verify signature using raw body
   const signature = req.headers['x-paystack-signature'] as string;
   if (WEBHOOK_SECRET) {
     const hash = crypto
       .createHmac('sha512', WEBHOOK_SECRET)
-      .update(JSON.stringify(req.body))
+      .update(rawBody)
       .digest('hex');
     if (hash !== signature) {
       console.error('Invalid webhook signature');
@@ -21,7 +25,10 @@ export const handlePaystackWebhook = async (req: Request, res: Response) => {
     }
   }
 
-  const event = req.body;
+  // Parse JSON after signature verification
+  const payload = JSON.parse(rawBody);
+  const event = payload;
+
   if (event.event === 'charge.success') {
     const transaction = event.data;
     const reference = transaction.reference;
@@ -33,7 +40,7 @@ export const handlePaystackWebhook = async (req: Request, res: Response) => {
       return res.status(400).send('Missing user ID');
     }
 
-    // Verify transaction with Paystack API (extra security)
+    // Verify transaction with Paystack API
     try {
       const verification = await axios.get(
         `https://api.paystack.co/transaction/verify/${reference}`,
@@ -50,7 +57,6 @@ export const handlePaystackWebhook = async (req: Request, res: Response) => {
       return res.status(400).send('Verification failed');
     }
 
-    // Get cart
     const cart = await prisma.cart.findUnique({
       where: { userId },
       include: { items: { include: { product: true } } },
@@ -61,13 +67,12 @@ export const handlePaystackWebhook = async (req: Request, res: Response) => {
       return res.status(400).send('Cart empty');
     }
 
-    // Create order – reuse stripeSessionId field for Paystack reference
     const order = await prisma.order.create({
       data: {
         userId,
-        total: transaction.amount / 100, // convert from cents
+        total: transaction.amount / 100,
         status: 'paid',
-        stripeSessionId: reference, // store Paystack reference
+        stripeSessionId: reference,
         items: {
           create: cart.items.map((item) => ({
             productId: item.productId,
@@ -78,7 +83,6 @@ export const handlePaystackWebhook = async (req: Request, res: Response) => {
       },
     });
 
-    // Clear the cart
     await prisma.cartItem.deleteMany({ where: { cartId: cart.id } });
     console.log(`Order ${order.id} created, cart cleared for user ${userId}`);
   }
