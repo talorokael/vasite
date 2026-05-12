@@ -1,5 +1,32 @@
 // apps/frontend/lib/api-client.ts
 import { Product, User, Category } from "../types";
+export interface OrderItem {
+  id: string;
+  quantity: number;
+  price: number;
+  product: {
+    name: string;
+    images?: string[];
+  };
+}
+
+export interface Order {
+  id: string;
+  userId: string;
+  total: number;
+  status: string;
+  stripeSessionId?: string;
+  createdAt: string;
+  updatedAt: string;
+  items: OrderItem[];
+}
+
+export interface AdminOrder extends Order {
+  user: {
+    email: string;
+    name: string | null;
+  };
+}
 
 const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:3001";
 
@@ -21,11 +48,11 @@ export class ApiClient {
     const url = `${API_BASE_URL}${endpoint}`;
 
     const headers: Record<string, string> = {
-    "Content-Type": "application/json",
-    ...(options.headers as Record<string, string> || {}),
-  };
+      "Content-Type": "application/json",
+      ...((options.headers as Record<string, string>) || {}),
+    };
     if (this.token) {
-      headers['Authorization'] = `Bearer ${this.token}`;
+      headers["Authorization"] = `Bearer ${this.token}`;
     }
 
     const response = await fetch(url, {
@@ -129,19 +156,28 @@ export class ApiClient {
     password: string,
     name?: string,
   ): Promise<{ user: User; token: string }> {
-    const data = await this.request<{ user: User; token: string }>("/api/auth/register", {
-      method: "POST",
-      body: JSON.stringify({ email, password, name }),
-    });
+    const data = await this.request<{ user: User; token: string }>(
+      "/api/auth/register",
+      {
+        method: "POST",
+        body: JSON.stringify({ email, password, name }),
+      },
+    );
     this.setToken(data.token);
     return data;
   }
 
-  async login(email: string, password: string): Promise<{ user: User; token: string }> {
-    const data = await this.request<{ user: User; token: string }>("/api/auth/login", {
-      method: "POST",
-      body: JSON.stringify({ email, password }),
-    });
+  async login(
+    email: string,
+    password: string,
+  ): Promise<{ user: User; token: string }> {
+    const data = await this.request<{ user: User; token: string }>(
+      "/api/auth/login",
+      {
+        method: "POST",
+        body: JSON.stringify({ email, password }),
+      },
+    );
     this.setToken(data.token);
     return data;
   }
@@ -195,6 +231,45 @@ export class ApiClient {
     updatedAt: string;
   }> {
     return this.request("/api/admin/stats");
+  }
+
+  async createCheckoutSession(): Promise<{ sessionId: string; url: string }> {
+  return this.request('/api/checkout/create-session', { method: 'POST' });
+}
+
+  // Orders (user)
+  async getOrders(
+    page = 1,
+  ): Promise<{
+    orders: Order[];
+    total: number;
+    page: number;
+    totalPages: number;
+  }> {
+    return this.request(`/api/orders?page=${page}`);
+  }
+
+  async getOrder(id: string): Promise<Order> {
+    return this.request(`/api/orders/${id}`);
+  }
+
+  // Admin orders
+  async getAllOrders(
+    page = 1,
+  ): Promise<{
+    orders: AdminOrder[];
+    total: number;
+    page: number;
+    totalPages: number;
+  }> {
+    return this.request(`/api/admin/orders?page=${page}`);
+  }
+
+  async updateOrderStatus(orderId: string, status: string): Promise<Order> {
+    return this.request(`/api/admin/orders/${orderId}/status`, {
+      method: "PATCH",
+      body: JSON.stringify({ status }),
+    });
   }
 }
 

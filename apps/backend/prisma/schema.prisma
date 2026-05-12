@@ -18,6 +18,7 @@ model User {
   products     Product[]
   sessions     Session[]
   cart         Cart[]
+  orders       Order[]   
   
 
   @@map("users")
@@ -77,6 +78,7 @@ model Product {
   category       Category?   @relation(fields: [categoryId], references: [id])
   user           User?       @relation(fields: [userId], references: [id])
   items     CartItem[]
+  orderItems     OrderItem[]
   @@index([isAvailable])
   @@index([categoryId])
   @@index([name])
@@ -107,6 +109,32 @@ model CartItem {
 
   @@unique([cartId, productId])
   @@map("cart_items")
+}
+
+model Order {
+  id               String      @id @default(cuid())
+  userId           String
+  user             User        @relation(fields: [userId], references: [id])
+  total            Float
+  status           String      @default("pending")
+  stripeSessionId  String?     @unique
+  createdAt        DateTime    @default(now())
+  updatedAt        DateTime    @updatedAt
+  items            OrderItem[]
+
+  @@map("orders")
+}
+
+model OrderItem {
+  id        String   @id @default(cuid())
+  orderId   String
+  order     Order    @relation(fields: [orderId], references: [id], onDelete: Cascade)
+  productId String
+  product   Product  @relation(fields: [productId], references: [id])
+  quantity  Int
+  price     Float    // price at time of purchase
+
+  @@map("order_items")
 }
 
 enum Role {

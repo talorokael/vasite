@@ -4,16 +4,15 @@ import cors from 'cors';
 import helmet from 'helmet';
 import rateLimit from 'express-rate-limit';
 import cartRoutes from './routes/cart.js';
-
-
-// Import routes
 import usersRouter from './routes/users.js';
 import authRouter from './routes/auth.js';
 import categoriesRoutes from './routes/categories.js';
 import productRoutes from './routes/products.js';
 import statsRouter from './routes/stats.js';
-
 import cookieParser from 'cookie-parser';
+import ordersRouter from './routes/orders.js';
+import checkoutRouter from './routes/checkout.js';
+import { handlePaystackWebhook } from './webhooks/paystack.js';
 
 const app = express();
 app.set('trust proxy', 1);
@@ -58,6 +57,7 @@ app.use(cors({
   methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
   allowedHeaders: ['Content-Type', 'Authorization']
 }));
+app.post('/api/webhooks/stripe', express.raw({ type: 'application/json' }), handlePaystackWebhook);
 
 app.use(express.json({ limit: '10mb' }));
 
@@ -71,6 +71,9 @@ app.use('/api/products', productRoutes);
 app.use('/api/users', usersRouter);
 app.use('/api/admin/stats', statsRouter);
 app.use('/api/cart', cartRoutes);
+app.use('/api/orders', ordersRouter);
+app.use('/api/checkout', checkoutRouter);
+
 
 /**
  * HEALTH CHECK

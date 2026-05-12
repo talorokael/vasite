@@ -1,11 +1,29 @@
 "use client";
 
 import { useCart } from "@/lib/CartContext";
+import { apiClient } from "@/lib/api-client";
 import Image from "next/image";
 import Link from "next/link";
+import { useState } from "react";
 
 export default function CartPage() {
   const { cart, isLoading, updateQuantity, removeItem, cartCount } = useCart();
+  const [isCheckingOut, setIsCheckingOut] = useState(false);
+
+  const handleCheckout = async () => {
+    if (!cart || cart.items.length === 0) return;
+    setIsCheckingOut(true);
+    try {
+      const { url } = await apiClient.createCheckoutSession();
+      // Redirect to Stripe Checkout
+      window.location.href = url;
+    } catch (error) {
+      console.error("Checkout error:", error);
+      alert("Failed to start checkout. Please try again.");
+    } finally {
+      setIsCheckingOut(false);
+    }
+  };
 
   if (isLoading) return <div className="p-8">Loading cart...</div>;
   if (!cart || cart.items.length === 0) {
@@ -64,8 +82,12 @@ export default function CartPage() {
       </div>
       <div className="mt-6 text-right">
         <p className="text-xl font-bold">Total: ${(total / 100).toFixed(2)}</p>
-        <button className="mt-4 bg-green-600 text-white px-6 py-2 rounded hover:bg-green-700">
-          Proceed to Checkout
+        <button
+          onClick={handleCheckout}
+          disabled={isCheckingOut}
+          className="mt-4 bg-green-600 text-white px-6 py-2 rounded hover:bg-green-700 disabled:opacity-50"
+        >
+          {isCheckingOut ? "Redirecting..." : "Proceed to Checkout"}
         </button>
       </div>
     </div>
