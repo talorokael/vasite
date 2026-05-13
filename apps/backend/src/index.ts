@@ -39,24 +39,19 @@ if (process.env.NODE_ENV === 'production') {
   console.log('⚠️  Rate limiting disabled in development');
 }
 
-/* const limiter = rateLimit({
-  windowMs: 15 * 60 * 1000, // 15 minutes
-  max: 100, // 100 requests per IP
-  message: 'Too many requests, please try again later.',
-  standardHeaders: true,
-  legacyHeaders: false,
-});
-
-app.use(limiter); */
-
-
-
 app.use(cors({
   origin: process.env.FRONTEND_URL || 'http://localhost:3000',
   credentials: true,
   methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
   allowedHeaders: ['Content-Type', 'Authorization']
 }));
+
+// 🟢 CATCH-ALL LOGGER – logs every incoming request
+app.use((req, res, next) => {
+  console.log(`📡 ${req.method} ${req.url}`);
+  next();
+});
+
 app.post('/api/webhooks/paystack', express.raw({ type: 'application/json' }), handlePaystackWebhook);
 
 app.use(express.json({ limit: '10mb' }));
@@ -74,10 +69,8 @@ app.use('/api/cart', cartRoutes);
 app.use('/api/orders', ordersRouter);
 app.use('/api/checkout', checkoutRouter);
 
-
 /**
  * HEALTH CHECK
- * Simple endpoint for monitoring/load balancers
  */
 app.get('/api/health', (_, res) => {
   res.json({ 
@@ -89,7 +82,6 @@ app.get('/api/health', (_, res) => {
 
 /**
  * 404 HANDLER
- * Catch-all for undefined routes
  */
 app.all(/.*/, (req, res) => {
   res.status(404).json({ 
@@ -101,7 +93,6 @@ app.all(/.*/, (req, res) => {
 
 /**
  * GLOBAL ERROR HANDLER
- * Last middleware in the chain
  */
 app.use((error: Error, req: express.Request, res: express.Response, next: express.NextFunction) => {
   console.error('Server error:', error);
@@ -113,7 +104,7 @@ app.use((error: Error, req: express.Request, res: express.Response, next: expres
     message: isProduction ? 'Something went wrong' : error.message,
     ...(!isProduction && { stack: error.stack })
   });
-    next(error)
+  next(error);
 });
 
 /**
