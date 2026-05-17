@@ -1,4 +1,5 @@
 /* eslint-disable  @typescript-eslint/no-explicit-any */
+
 type CacheEntry<T> = { value: T; expires: number };
 
 const cache = new Map<string, CacheEntry<any>>();

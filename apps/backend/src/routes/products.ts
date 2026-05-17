@@ -1,9 +1,10 @@
 // apps/backend/src/routes/products.ts
-import express, { Request, Response } from 'express';
-import { prisma } from '../lib/prisma.js';
-import { ProductType, StrainType, Prisma } from '@prisma/client';
-import { authenticate } from '../middleware/auth.js';
-import { requireRole } from '../middleware/rbac.js';
+import { clearCache } from "../lib/cache.js";
+import express, { Request, Response } from "express";
+import { prisma } from "../lib/prisma.js";
+import { ProductType, StrainType, Prisma } from "@prisma/client";
+import { authenticate } from "../middleware/auth.js";
+import { requireRole } from "../middleware/rbac.js";
 
 const router: express.Router = express.Router();
 
@@ -25,7 +26,6 @@ interface ProductInput {
   tags?: string[];
   images?: string[];
   isAvailable?: boolean;
-
 }
 
 /**
@@ -33,13 +33,13 @@ interface ProductInput {
  * Safe with exactOptionalPropertyTypes + Prisma semantics
  */
 function buildProductUpdateData(
-  input: Partial<ProductInput>
+  input: Partial<ProductInput>,
 ): Prisma.ProductUpdateInput {
   const updateData: Prisma.ProductUpdateInput = {};
 
   const assignIfDefined = <K extends keyof Prisma.ProductUpdateInput>(
     key: K,
-    value: Prisma.ProductUpdateInput[K] | undefined
+    value: Prisma.ProductUpdateInput[K] | undefined,
   ) => {
     if (value !== undefined) {
       updateData[key] = value;
@@ -47,39 +47,39 @@ function buildProductUpdateData(
   };
 
   // Scalars
-  assignIfDefined('name', input.name);
-  assignIfDefined('price', input.price);
-  assignIfDefined('productType', input.productType);
-  assignIfDefined('isAvailable', input.isAvailable);
+  assignIfDefined("name", input.name);
+  assignIfDefined("price", input.price);
+  assignIfDefined("productType", input.productType);
+  assignIfDefined("isAvailable", input.isAvailable);
 
   // Nullable strings ("" → null, undefined → omit)
   if (input.description !== undefined) {
     assignIfDefined(
-      'description',
-      input.description === '' ? null : input.description
+      "description",
+      input.description === "" ? null : input.description,
     );
   }
 
   if (input.sku !== undefined) {
-    assignIfDefined('sku', input.sku === '' ? null : input.sku);
+    assignIfDefined("sku", input.sku === "" ? null : input.sku);
   }
 
   if (input.size !== undefined) {
-    assignIfDefined('size', input.size === '' ? null : input.size);
+    assignIfDefined("size", input.size === "" ? null : input.size);
   }
 
   // Nullable numbers
-  assignIfDefined('compareAtPrice', input.compareAtPrice);
-  assignIfDefined('weight', input.weight);
-  assignIfDefined('cbdContent', input.cbdContent);
-  assignIfDefined('thcContent', input.thcContent);
+  assignIfDefined("compareAtPrice", input.compareAtPrice);
+  assignIfDefined("weight", input.weight);
+  assignIfDefined("cbdContent", input.cbdContent);
+  assignIfDefined("thcContent", input.thcContent);
 
   // Enum
-  assignIfDefined('strainType', input.strainType);
+  assignIfDefined("strainType", input.strainType);
 
   // Arrays
-  assignIfDefined('tags', input.tags);
-  assignIfDefined('images', input.images);
+  assignIfDefined("tags", input.tags);
+  assignIfDefined("images", input.images);
 
   // Inventory (0 is valid)
   if (input.inventory !== undefined) {
@@ -99,7 +99,7 @@ function buildProductUpdateData(
 }
 
 // GET /api/products
-router.get('/', async (req: Request, res: Response) => {
+router.get("/", async (req: Request, res: Response) => {
   try {
     const page = parseInt(req.query.page as string) || 1;
     const limit = parseInt(req.query.limit as string) || 20;
@@ -115,10 +115,10 @@ router.get('/', async (req: Request, res: Response) => {
           select: { id: true, name: true },
         },
       },
-      orderBy: { createdAt: 'desc' },
+      orderBy: { createdAt: "desc" },
     });
 
-    const productsWithCategory = products.map(product => ({
+    const productsWithCategory = products.map((product) => ({
       ...product,
       categoryName: product.category?.name || null,
     }));
@@ -133,19 +133,19 @@ router.get('/', async (req: Request, res: Response) => {
       },
     });
   } catch (error: unknown) {
-    console.error('Error fetching products:', error);
-    res.status(500).json({ error: 'Failed to fetch products' });
+    console.error("Error fetching products:", error);
+    res.status(500).json({ error: "Failed to fetch products" });
   }
 });
 
 // POST /api/products
-router.post('/', authenticate, requireRole(['ADMIN']), async (req, res) => {
+router.post("/", authenticate, requireRole(["ADMIN"]), async (req, res) => {
   try {
     const input: ProductInput = req.body;
 
-    if (!input.name || typeof input.price !== 'number' || !input.productType) {
+    if (!input.name || typeof input.price !== "number" || !input.productType) {
       return res.status(400).json({
-        error: 'Missing required fields: name, price, and productType',
+        error: "Missing required fields: name, price, and productType",
       });
     }
 
@@ -172,75 +172,84 @@ router.post('/', authenticate, requireRole(['ADMIN']), async (req, res) => {
     }
 
     const product = await prisma.product.create({ data: createData });
+    clearCache("dashboard-stats");
+    clearCache("products"); 
     res.status(201).json(product);
   } catch (error: unknown) {
-    console.error('Error creating product:', error);
-    res.status(500).json({ error: 'Failed to create product' });
+    console.error("Error creating product:", error);
+    res.status(500).json({ error: "Failed to create product" });
   }
 });
 
 // PUT /api/products/:id
-router.put('/:id', authenticate, requireRole(['ADMIN']), async (req, res) => {
+router.put("/:id", authenticate, requireRole(["ADMIN"]), async (req, res) => {
   const { id } = req.params;
 
   if (!id) {
-    return res.status(400).json({ error: 'Product ID is required' });
+    return res.status(400).json({ error: "Product ID is required" });
   }
 
   const updateInput: Partial<ProductInput> = req.body;
 
   const existingProduct = await prisma.product.findUnique({
-    where: { id: id as string  },
+    where: { id: id as string },
   });
 
   if (!existingProduct) {
-    return res.status(404).json({ error: 'Product not found' });
+    return res.status(404).json({ error: "Product not found" });
   }
 
   const updateData = buildProductUpdateData(updateInput);
 
   const updatedProduct = await prisma.product.update({
-    where: { id: id as string  },
+    where: { id: id as string },
     data: updateData,
   });
 
   res.json(updatedProduct);
+  clearCache('dashboard-stats');
+  clearCache('products');
 });
-
 
 // DELETE /api/products/:id
 // DELETE /api/products/:id - Soft delete product (Admin only)
-router.delete('/:id', authenticate, requireRole(['ADMIN']), async (req, res) => {
-  try {
-    const { id } = req.params;
+router.delete(
+  "/:id",
+  authenticate,
+  requireRole(["ADMIN"]),
+  async (req, res) => {
+    try {
+      const { id } = req.params;
 
-    // Narrow id early (required for Prisma WhereUniqueInput)
-    if (!id) {
-      return res.status(400).json({ error: 'Product ID is required' });
+      // Narrow id early (required for Prisma WhereUniqueInput)
+      if (!id) {
+        return res.status(400).json({ error: "Product ID is required" });
+      }
+
+      // Verify product exists
+      const existingProduct = await prisma.product.findUnique({
+        where: { id: id as string },
+      });
+
+      if (!existingProduct) {
+        return res.status(404).json({ error: "Product not found" });
+      }
+
+      // Soft delete: mark as unavailable
+      await prisma.product.update({
+        where: { id: id as string },
+        data: { isAvailable: false },
+      });
+
+      // 204 = successful request, no response body
+      res.status(204).send();
+      clearCache('dashboard-stats');
+      clearCache('products');
+    } catch (error: unknown) {
+      console.error("Error deleting product:", error);
+      res.status(500).json({ error: "Failed to delete product" });
     }
-
-    // Verify product exists
-    const existingProduct = await prisma.product.findUnique({
-      where: { id: id as string  },
-    });
-
-    if (!existingProduct) {
-      return res.status(404).json({ error: 'Product not found' });
-    }
-
-    // Soft delete: mark as unavailable
-    await prisma.product.update({
-      where: { id: id as string  },
-      data: { isAvailable: false },
-    });
-
-    // 204 = successful request, no response body
-    res.status(204).send();
-  } catch (error: unknown) {
-    console.error('Error deleting product:', error);
-    res.status(500).json({ error: 'Failed to delete product' });
-  }
-});
-
+  },
+);
 
 export default router;

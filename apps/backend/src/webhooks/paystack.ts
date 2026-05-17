@@ -67,6 +67,16 @@ export const handlePaystackWebhook = async (req: Request, res: Response) => {
       return res.status(400).send('Cart empty');
     }
 
+    // Idempotency: check for an existing order with this Paystack reference
+    const existingOrder = await prisma.order.findFirst({
+      where: { stripeSessionId: reference },
+    });
+
+    if (existingOrder) {
+      console.log(`[Webhook] Order already exists for reference ${reference}, skipping creation`);
+      return res.status(200).json({ received: true, duplicate: true });
+    }
+
     const order = await prisma.order.create({
       data: {
         userId,
