@@ -12,7 +12,7 @@ router.get('/', async (req, res) => {
     const start = Date.now();
     await prisma.$queryRaw`SELECT 1`;
     dbLatency = Date.now() - start;
-  } catch (err) {
+  } catch {
     dbStatus = 'error';
   }
 
