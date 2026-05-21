@@ -3,6 +3,7 @@
 
 import { createContext, useContext, ReactNode } from "react";
 import useSWR, { mutate } from "swr";
+import toast from "react-hot-toast";
 import { apiClient } from "./api-client";
 import { useAuth } from "./AuthContext";
 
@@ -18,7 +19,7 @@ interface CartItem {
   };
 }
 
-interface Cart {
+export interface Cart {
   id: string;
   userId: string;
   items: CartItem[];
@@ -49,31 +50,76 @@ export function CartProvider({ children }: { children: ReactNode }) {
   );
 
   const addToCart = async (productId: string, quantity: number) => {
-    if (!user) {
-      alert("Please log in to add items to cart");
-      return;
+    try {
+      if (!user) {
+        // Guest mode: store in localStorage
+        const existing = localStorage.getItem("guestCart");
+
+        const cart: Array<{ productId: string; quantity: number }> = existing
+          ? JSON.parse(existing)
+          : [];
+
+        const existingItemIndex = cart.findIndex(
+          (item) => item.productId === productId
+        );
+
+        if (existingItemIndex >= 0) {
+          cart[existingItemIndex].quantity += quantity;
+        } else {
+          cart.push({ productId, quantity });
+        }
+
+        localStorage.setItem("guestCart", JSON.stringify(cart));
+
+        toast.success("Added to cart (guest)");
+        return;
+      }
+
+      // Authenticated mode: call API
+      await apiClient.fetch("/api/cart/items", {
+        method: "POST",
+        body: JSON.stringify({ productId, quantity }),
+      });
+
+      mutate("/api/cart");
+      toast.success("Added to cart");
+    } catch (error) {
+      console.error("Add to cart error:", error);
+      toast.error("Failed to add item to cart");
     }
-    await apiClient.fetch("/api/cart/items", {
-      method: "POST",
-      body: JSON.stringify({ productId, quantity }),
-    });
-    mutate("/api/cart");
   };
 
   const updateQuantity = async (itemId: string, quantity: number) => {
-    await apiClient.fetch(`/api/cart/items/${itemId}`, {
-      method: "PUT",
-      body: JSON.stringify({ quantity }),
-    });
-    mutate("/api/cart");
+    try {
+      await apiClient.fetch(`/api/cart/items/${itemId}`, {
+        method: "PUT",
+        body: JSON.stringify({ quantity }),
+      });
+
+      mutate("/api/cart");
+      toast.success("Cart updated");
+    } catch (error) {
+      console.error("Update quantity error:", error);
+      toast.error("Failed to update cart");
+    }
   };
 
   const removeItem = async (itemId: string) => {
-    await apiClient.fetch(`/api/cart/items/${itemId}`, { method: "DELETE" });
-    mutate("/api/cart");
+    try {
+      await apiClient.fetch(`/api/cart/items/${itemId}`, {
+        method: "DELETE",
+      });
+
+      mutate("/api/cart");
+      toast.success("Item removed from cart");
+    } catch (error) {
+      console.error("Remove item error:", error);
+      toast.error("Failed to remove item");
+    }
   };
 
-  const cartCount = cart?.items?.reduce((sum, item) => sum + item.quantity, 0) || 0;
+  const cartCount =
+    cart?.items?.reduce((sum, item) => sum + item.quantity, 0) || 0;
 
   return (
     <CartContext.Provider
@@ -93,8 +139,10 @@ export function CartProvider({ children }: { children: ReactNode }) {
 
 export function useCart() {
   const context = useContext(CartContext);
+
   if (context === undefined) {
     throw new Error("useCart must be used within a CartProvider");
   }
+
   return context;
 }

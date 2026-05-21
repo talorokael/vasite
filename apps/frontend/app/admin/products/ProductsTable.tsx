@@ -1,5 +1,4 @@
 "use client";
-import Image from 'next/image';
 
 import { Product } from "@/types";
 import { useState } from "react";
@@ -7,6 +6,10 @@ import Link from "next/link";
 import useSWR from "swr";
 import { apiClient } from "@/lib/api-client";
 import { useAuth } from "@/lib/AuthContext";
+import ImageWithFallback from "@/components/ImageWithFallback";
+import SkeletonTable from "@/components/SkeletonTable";
+import EmptyState from "@/components/EmptyState";
+import toast from "react-hot-toast";
 
 interface ProductsResponse {
   products: Product[];
@@ -20,6 +23,7 @@ interface ProductsResponse {
 
 export default function ProductsTable() {
   const { user } = useAuth();
+
   const [currentPage, setCurrentPage] = useState(1);
   const [itemsPerPage, setItemsPerPage] = useState(20);
   const [showDeleted, setShowDeleted] = useState(false);
@@ -32,7 +36,7 @@ export default function ProductsTable() {
         limit: itemsPerPage,
       });
     },
-    { keepPreviousData: true },
+    { keepPreviousData: true }
   );
 
   const products: Product[] = showDeleted
@@ -43,30 +47,51 @@ export default function ProductsTable() {
   const totalItems = data?.pagination?.total || 0;
 
   const handlePageChange = (newPage: number) => {
-    if (newPage >= 1 && newPage <= totalPages) setCurrentPage(newPage);
-  };
-
-  const handleDelete = async (productId: string) => {
-    if (!confirm("Are you sure you want to delete this product?")) return;
-    try {
-      await apiClient.deleteProduct(productId);
-      mutate(); // revalidate
-    } catch (error: unknown) {
-      console.error("Failed to delete product:", error);
-      const message = error instanceof Error ? error.message : "Unknown error";
-      alert(`Failed to delete product: ${message}`);
+    if (newPage >= 1 && newPage <= totalPages) {
+      setCurrentPage(newPage);
     }
   };
 
-  if (isLoading) return <div className="p-8">Loading products...</div>;
-  if (error)
-    return <div className="p-8 text-red-600">Failed to load products</div>;
+  const handleDelete = async (productId: string) => {
+    if (!confirm("Are you sure you want to delete this product?")) {
+      return;
+    }
+
+    try {
+      await apiClient.deleteProduct(productId);
+
+      toast.success("Product deleted");
+
+      mutate();
+    } catch (error: unknown) {
+      const message =
+        error instanceof Error ? error.message : "Unknown error";
+
+      toast.error(`Failed to delete product: ${message}`);
+    }
+  };
+
+  // Fixed loading state
+  if (isLoading) {
+    return <SkeletonTable rows={itemsPerPage} />;
+  }
+
+  if (error) {
+    return (
+      <div className="p-8 text-red-600">
+        Failed to load products
+      </div>
+    );
+  }
 
   return (
     <div className="p-6">
       {/* Header */}
       <div className="flex justify-between items-center mb-6">
-        <h1 className="text-2xl font-bold">Product Management</h1>
+        <h1 className="text-2xl font-bold">
+          Product Management
+        </h1>
+
         <Link
           href="/admin/products/new"
           className="bg-green-600 text-white px-4 py-2 rounded hover:bg-green-700"
@@ -80,8 +105,8 @@ export default function ProductsTable() {
         <div className="flex items-center space-x-6">
           <span className="text-sm text-gray-600">
             Showing {(currentPage - 1) * itemsPerPage + 1} to{" "}
-            {Math.min(currentPage * itemsPerPage, totalItems)} of {totalItems}{" "}
-            products
+            {Math.min(currentPage * itemsPerPage, totalItems)} of{" "}
+            {totalItems} products
           </span>
 
           {/* Toggle Checkbox */}
@@ -92,7 +117,10 @@ export default function ProductsTable() {
               onChange={(e) => setShowDeleted(e.target.checked)}
               className="w-4 h-4 text-green-600 border-gray-300 rounded focus:ring-green-500"
             />
-            <span className="text-sm text-gray-700">Show deleted products</span>
+
+            <span className="text-sm text-gray-700">
+              Show deleted products
+            </span>
           </label>
         </div>
 
@@ -142,18 +170,23 @@ export default function ProductsTable() {
               <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">
                 Image
               </th>
+
               <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">
                 Name
               </th>
+
               <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">
                 Price
               </th>
+
               <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">
                 Category
               </th>
+
               <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">
                 Status
               </th>
+
               <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">
                 Actions
               </th>
@@ -163,36 +196,38 @@ export default function ProductsTable() {
           <tbody className="bg-white divide-y divide-gray-200">
             {products.map((product) => (
               <tr key={product.id}>
+                {/* Fixed image cell */}
                 <td className="px-6 py-4">
-                  {product.images && product.images[0] ? (
-                    <div className="relative w-12 h-12">
-                      <Image
-                        src={product.images[0]}
-                        alt={product.name}
-                        fill
-                        className="object-cover rounded"
-                      />
-                    </div>
-                  ) : (
-                    <div className="w-12 h-12 bg-gray-100 rounded"></div>
-                  )}
+                  <div className="relative w-12 h-12">
+                    <ImageWithFallback
+                      src={product.images?.[0]}
+                      alt={product.name}
+                      fill
+                      className="object-cover rounded"
+                    />
+                  </div>
                 </td>
+
                 <td className="px-6 py-4">
                   <div className="font-medium text-gray-900">
                     {product.name}
                   </div>
+
                   {product.sku && (
                     <div className="text-sm text-gray-500">
                       SKU: {product.sku}
                     </div>
                   )}
                 </td>
+
                 <td className="px-6 py-4">
                   ${(product.price / 100).toFixed(2)}
                 </td>
+
                 <td className="px-6 py-4">
                   {product.categoryName || "Uncategorized"}
                 </td>
+
                 <td className="px-6 py-4">
                   <span
                     className={`px-2 inline-flex text-xs font-semibold rounded-full ${
@@ -201,9 +236,12 @@ export default function ProductsTable() {
                         : "bg-red-100 text-red-800"
                     }`}
                   >
-                    {product.isAvailable ? "Available" : "Out of Stock"}
+                    {product.isAvailable
+                      ? "Available"
+                      : "Out of Stock"}
                   </span>
                 </td>
+
                 <td className="px-6 py-4 text-sm font-medium">
                   <>
                     <Link
@@ -212,6 +250,7 @@ export default function ProductsTable() {
                     >
                       Edit
                     </Link>
+
                     <button
                       onClick={() => handleDelete(product.id)}
                       className="text-red-600 hover:text-red-900"
@@ -225,9 +264,15 @@ export default function ProductsTable() {
           </tbody>
         </table>
 
+        {/* Fixed empty state */}
         {products.length === 0 && (
-          <div className="text-center py-8 text-gray-500">
-            No products found. Add your first product!
+          <div className="col-span-full">
+            <EmptyState
+              title="No products found"
+              description="Add your first product to get started."
+              ctaText="Add Product"
+              ctaHref="/admin/products/new"
+            />
           </div>
         )}
       </div>

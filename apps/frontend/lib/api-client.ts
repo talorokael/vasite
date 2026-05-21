@@ -1,5 +1,6 @@
 // apps/frontend/lib/api-client.ts
 import { Product, User, Category } from "../types";
+import { Cart } from './CartContext'; // or define locally
 export interface OrderItem {
   id: string;
   quantity: number;
@@ -234,13 +235,20 @@ export class ApiClient {
   }
 
   async createCheckoutSession(): Promise<{ sessionId: string; url: string }> {
-  return this.request('/api/checkout/create-session', { method: 'POST' });
-}
+    return this.request("/api/checkout/create-session", { method: "POST" });
+  }
+
+  async mergeGuestCart(
+    items: Array<{ productId: string; quantity: number }>,
+  ): Promise<Cart> {
+    return this.request<Cart>("/api/cart/merge", {
+      method: "POST",
+      body: JSON.stringify({ items }),
+    });
+  }
 
   // Orders (user)
-  async getOrders(
-    page = 1,
-  ): Promise<{
+  async getOrders(page = 1): Promise<{
     orders: Order[];
     total: number;
     page: number;
@@ -254,9 +262,7 @@ export class ApiClient {
   }
 
   // Admin orders
-  async getAllOrders(
-    page = 1,
-  ): Promise<{
+  async getAllOrders(page = 1): Promise<{
     orders: AdminOrder[];
     total: number;
     page: number;

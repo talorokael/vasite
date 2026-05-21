@@ -1,25 +1,79 @@
-name: CI
-on: [push, pull_request]
+name: CI & Deploy
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+
 jobs:
-  build:
+  build-and-test:
     runs-on: ubuntu-latest
+    services:
+      postgres:
+        image: postgres:16
+        env:
+          POSTGRES_USER: postgres
+          POSTGRES_PASSWORD: postgres
+          POSTGRES_DB: verdeafrique_test
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd pg_isready
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
     steps:
-      - uses: actions/checkout@v3
-      - uses: pnpm/action-setup@v2
-      
+      - uses: actions/checkout@v4
+      - uses: pnpm/action-setup@v4
+      - name: Use Node.js 20
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: 'pnpm'
       - name: Install dependencies
         run: pnpm install
-
-      - name: Load environment variables
-        run: |
-          echo "DATABASE_URL=postgresql://dummy:password@localhost:5432/verdeafrique?schema=public" >> $GITHUB_ENV
-        
-      # ✅ NEW: Generate Prisma Client (critical for TypeScript)
       - name: Generate Prisma Client
         run: pnpm --filter backend exec prisma generate
-        
-      - name: Lint
-        run: pnpm -r run lint  # Uses root package.json's "lint" script
-        
-      - name: Build
-        run: pnpm -r run build  # Uses root package.json's "build" script
+        env:
+          DATABASE_URL: postgresql://postgres:postgres@localhost:5432/verdeafrique_test
+      - name: Build all packages
+        run: pnpm build
+
+  deploy-backend:
+    if: github.ref == 'refs/heads/main'
+    needs: build-and-test
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: pnpm/action-setup@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: 'pnpm'
+      - name: Install Railway CLI
+        run: npm install -g @railway/cli
+      - name: Deploy to Railway
+        run: railway up --ci --service backend
+        env:
+          RAILWAY_TOKEN: ${{ secrets.RAILWAY_TOKEN }}
+
+  deploy-frontend:
+    if: github.ref == 'refs/heads/main'
+    needs: build-and-test
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: pnpm/action-setup@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: 'pnpm'
+      - name: Install dependencies (for Vercel)
+        run: pnpm install
+        working-directory: apps/frontend
+      - name: Deploy to Vercel
+        run: npx vercel@latest --prod --token ${{ secrets.VERCEL_TOKEN }} --yes
+        env:
+          VERCEL_ORG_ID: ${{ secrets.VERCEL_ORG_ID }}
+          VERCEL_PROJECT_ID: ${{ secrets.VERCEL_PROJECT_ID }}
