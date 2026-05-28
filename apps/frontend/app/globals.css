@@ -1,33 +1,127 @@
- @import "tailwindcss"; 
+@import "tailwindcss";
 
-
+/* Design Tokens from DESIGN.md */
 :root {
-  --background: #ffffff;
-  --foreground: #171717;
+  /* Colors */
+  --color-text-primary: #ffffff;
+  --color-text-secondary: #004236;
+  --color-text-tertiary: #373737;
+  --color-text-inverse: #131010;
+  --color-surface-base: #000000;
+  --color-surface-strong: #fafafa;
+  
+  /* Accent colors */
+  --color-accent: #004236;
+  --color-accent-hover: #003028;
+  --color-accent-light: #e8f5f0;
+  
+  /* Semantic */
+  --background: #fafafa;
+  --foreground: #131010;
+  --card: #ffffff;
+  --card-foreground: #131010;
+  --primary: #004236;
+  --primary-foreground: #ffffff;
+  --secondary: #e8f5f0;
+  --secondary-foreground: #004236;
+  --muted: #f5f5f5;
+  --muted-foreground: #373737;
+  --destructive: #dc2626;
+  --destructive-foreground: #ffffff;
+  --border: #e5e7eb;
+  --input: #e5e7eb;
+  --ring: #004236;
+  
+  /* Spacing */
+  --space-1: 5px;
+  --space-2: 6px;
+  --space-3: 7px;
+  --space-4: 8px;
+  --space-5: 9.6px;
+  --space-6: 10px;
+  --space-7: 10.5px;
+  --space-8: 11.4px;
+  
+  /* Radius */
+  --radius-xs: 3px;
+  --radius-sm: 6px;
+  --radius-md: 8px;
+  --radius-lg: 12px;
+  --radius-full: 999px;
+  --radius: 8px;
+  
+  /* Motion */
+  --motion-instant: 250ms;
+  --motion-fast: 300ms;
 }
 
 @theme inline {
   --color-background: var(--background);
   --color-foreground: var(--foreground);
-  --font-sans: var(--font-geist-sans);
-  --font-mono: var(--font-geist-mono);
+  --color-card: var(--card);
+  --color-card-foreground: var(--card-foreground);
+  --color-primary: var(--primary);
+  --color-primary-foreground: var(--primary-foreground);
+  --color-secondary: var(--secondary);
+  --color-secondary-foreground: var(--secondary-foreground);
+  --color-muted: var(--muted);
+  --color-muted-foreground: var(--muted-foreground);
+  --color-destructive: var(--destructive);
+  --color-destructive-foreground: var(--destructive-foreground);
+  --color-border: var(--border);
+  --color-input: var(--input);
+  --color-ring: var(--ring);
+  --font-sans: var(--font-inter), system-ui, sans-serif;
+  --font-mono: var(--font-geist-mono), monospace;
+  --radius-sm: var(--radius-sm);
+  --radius-md: var(--radius-md);
+  --radius-lg: var(--radius-lg);
 }
 
 @media (prefers-color-scheme: dark) {
   :root {
     --background: #0a0a0a;
     --foreground: #ededed;
+    --card: #1a1a1a;
+    --card-foreground: #ededed;
+    --muted: #262626;
+    --muted-foreground: #a3a3a3;
+    --border: #262626;
+    --input: #262626;
   }
+}
+
+* {
+  border-color: var(--border);
 }
 
 body {
   background: var(--background);
   color: var(--foreground);
-  font-family: Arial, Helvetica, sans-serif;
+  font-family: var(--font-sans);
+  font-size: 14px;
+  line-height: 1.5;
 }
 
-input[type="email"], 
-input[type="password"], 
-input[type="text"] {
-  color: black !important;
+/* Focus-visible for accessibility */
+*:focus-visible {
+  outline: 2px solid var(--ring);
+  outline-offset: 2px;
+}
+
+/* Form inputs */
+input[type="email"],
+input[type="password"],
+input[type="text"],
+input[type="number"],
+textarea,
+select {
+  color: var(--foreground);
+  background-color: var(--card);
+}
+
+/* Smooth transitions */
+a,
+button {
+  transition: all var(--motion-fast) ease;
 }

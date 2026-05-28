@@ -4,59 +4,135 @@
 import Link from 'next/link';
 import { useAuth } from '@/lib/AuthContext';
 import { useRouter } from 'next/navigation';
+import { LogOut, Package, User, Mail, Loader2 } from 'lucide-react';
+import { useState } from 'react';
 
 export default function AccountPage() {
-  const { user, logout } = useAuth();
+  const { user, logout, isLoading } = useAuth();
   const router = useRouter();
+  const [isLoggingOut, setIsLoggingOut] = useState(false);
 
   const handleLogout = async () => {
-    await logout();
-    router.push('/');
+    setIsLoggingOut(true);
+    try {
+      await logout();
+      router.push('/');
+    } finally {
+      setIsLoggingOut(false);
+    }
   };
 
-  // If user is logged in – show account info & logout button
-  if (user) {
+  // Loading state
+  if (isLoading) {
     return (
-      <div className="container mx-auto px-4 py-12 max-w-md">
-        <div className="bg-white rounded-lg shadow-md p-8 text-center">
-          <h1 className="text-2xl font-bold mb-4">My Account</h1>
-          <p className="text-gray-600 mb-2">Logged in as:</p>
-          <p className="font-medium text-gray-800 mb-4">{user.email}</p>
-          {user.name && <p className="text-sm text-gray-500 mb-6">{user.name}</p>}
-          <button
-            onClick={handleLogout}
-            className="w-full bg-red-600 text-white py-2 px-4 rounded-md hover:bg-red-700 transition-colors"
-          >
-            Logout
-          </button>
-          <Link href="/account/orders" className="mt-4 inline-block text-green-600 hover:underline">
-            View my orders
-          </Link>
-        </div>
+      <div className="min-h-[60vh] flex items-center justify-center">
+        <Loader2 className="w-8 h-8 animate-spin text-primary" />
       </div>
     );
   }
 
-  // Not logged in – show two buttons: Login and Register
+  // Logged in state
+  if (user) {
+    return (
+      <main className="container mx-auto px-4 py-12 max-w-lg">
+        <div className="bg-card rounded-lg shadow-sm border border-border p-8">
+          <div className="text-center mb-8">
+            <div className="w-20 h-20 bg-secondary rounded-full flex items-center justify-center mx-auto mb-4">
+              <User className="w-10 h-10 text-primary" />
+            </div>
+            <h1 className="text-2xl font-bold text-foreground mb-2">My Account</h1>
+            <p className="text-muted-foreground">Manage your account settings</p>
+          </div>
+
+          <div className="space-y-4 mb-8">
+            <div className="flex items-center gap-3 p-4 bg-muted rounded-lg">
+              <Mail className="w-5 h-5 text-muted-foreground" />
+              <div>
+                <p className="text-sm text-muted-foreground">Email</p>
+                <p className="font-medium text-foreground">{user.email}</p>
+              </div>
+            </div>
+
+            {user.name && (
+              <div className="flex items-center gap-3 p-4 bg-muted rounded-lg">
+                <User className="w-5 h-5 text-muted-foreground" />
+                <div>
+                  <p className="text-sm text-muted-foreground">Name</p>
+                  <p className="font-medium text-foreground">{user.name}</p>
+                </div>
+              </div>
+            )}
+
+            {user.role === 'ADMIN' && (
+              <div className="p-4 bg-secondary rounded-lg">
+                <p className="text-sm font-medium text-secondary-foreground">
+                  Admin Account
+                </p>
+                <Link
+                  href="/admin"
+                  className="text-primary hover:underline text-sm mt-1 inline-block"
+                >
+                  Go to Admin Dashboard →
+                </Link>
+              </div>
+            )}
+          </div>
+
+          <div className="space-y-3">
+            <Link
+              href="/account/orders"
+              className="w-full flex items-center justify-center gap-2 bg-primary text-primary-foreground py-3 px-4 rounded-md font-medium hover:bg-primary/90 transition-colors focus-visible:ring-2 focus-visible:ring-ring"
+            >
+              <Package className="w-5 h-5" />
+              View My Orders
+            </Link>
+
+            <button
+              onClick={handleLogout}
+              disabled={isLoggingOut}
+              className="w-full flex items-center justify-center gap-2 bg-destructive text-destructive-foreground py-3 px-4 rounded-md font-medium hover:bg-destructive/90 transition-colors disabled:opacity-50 focus-visible:ring-2 focus-visible:ring-ring"
+            >
+              {isLoggingOut ? (
+                <Loader2 className="w-5 h-5 animate-spin" />
+              ) : (
+                <LogOut className="w-5 h-5" />
+              )}
+              {isLoggingOut ? 'Logging out...' : 'Logout'}
+            </button>
+          </div>
+        </div>
+      </main>
+    );
+  }
+
+  // Not logged in state
   return (
-    <div className="container mx-auto px-4 py-12 max-w-md">
-      <div className="bg-white rounded-lg shadow-md p-8 text-center">
-        <h1 className="text-2xl font-bold mb-6">Account</h1>
-        <div className="space-y-4">
+    <main className="container mx-auto px-4 py-12 max-w-lg">
+      <div className="bg-card rounded-lg shadow-sm border border-border p-8 text-center">
+        <div className="w-20 h-20 bg-muted rounded-full flex items-center justify-center mx-auto mb-6">
+          <User className="w-10 h-10 text-muted-foreground" />
+        </div>
+
+        <h1 className="text-2xl font-bold text-foreground mb-2">Welcome</h1>
+        <p className="text-muted-foreground mb-8">
+          Sign in to access your account, view orders, and manage your preferences.
+        </p>
+
+        <div className="space-y-3">
           <Link
             href="/login"
-            className="block w-full bg-green-600 text-white py-2 px-4 rounded-md hover:bg-green-700 transition-colors"
+            className="block w-full bg-primary text-primary-foreground py-3 px-4 rounded-md font-medium hover:bg-primary/90 transition-colors focus-visible:ring-2 focus-visible:ring-ring"
           >
             Login
           </Link>
           <Link
             href="/register"
-            className="block w-full bg-gray-600 text-white py-2 px-4 rounded-md hover:bg-gray-700 transition-colors"
+            className="block w-full bg-muted text-foreground py-3 px-4 rounded-md font-medium hover:bg-muted/80 transition-colors focus-visible:ring-2 focus-visible:ring-ring"
           >
-            Register
+            Create Account
           </Link>
         </div>
       </div>
-    </div>
+    </main>
   );
 }
