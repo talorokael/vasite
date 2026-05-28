@@ -3,7 +3,10 @@
 
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
-import { ShoppingCartIcon, UserIcon } from '@heroicons/react/24/outline';
+import { ShoppingCart, User, Menu, X } from 'lucide-react';
+import { useCart } from '@/lib/CartContext';
+import { useAuth } from '@/lib/AuthContext';
+import { useState } from 'react';
 
 const navLinks = [
   { name: 'Hair', href: '/products?category=hair' },
@@ -17,46 +20,113 @@ const navLinks = [
 
 export default function Navbar() {
   const pathname = usePathname();
+  const { cartCount } = useCart();
+  const { user } = useAuth();
+  const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
 
   return (
-    <header className="bg-white shadow-md sticky top-0 z-50">
+    <header className="bg-card shadow-sm sticky top-0 z-50 border-b border-border">
       {/* Top row */}
-      <div className="container mx-auto px-4 py-3 flex items-center justify-between">
-        <div className="w-14" />
-        <Link href="/" className="text-2xl font-bold text-green-700">
+      <div className="container mx-auto px-4 py-4 flex items-center justify-between">
+        {/* Mobile menu button */}
+        <button
+          onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
+          className="lg:hidden p-2 hover:bg-muted rounded-md focus-visible:ring-2 focus-visible:ring-primary"
+          aria-label={mobileMenuOpen ? 'Close menu' : 'Open menu'}
+        >
+          {mobileMenuOpen ? (
+            <X className="w-6 h-6 text-foreground" />
+          ) : (
+            <Menu className="w-6 h-6 text-foreground" />
+          )}
+        </button>
+
+        {/* Logo */}
+        <Link 
+          href="/" 
+          className="text-2xl font-bold text-primary hover:opacity-80 transition-opacity"
+        >
           VerdeAfrique
         </Link>
-        <div className="flex items-center gap-4">
-          <Link href="/account" className="p-2 hover:bg-gray-100 rounded-full">
-            <UserIcon className="w-6 h-6 text-gray-700" />
+
+        {/* Icons */}
+        <div className="flex items-center gap-2">
+          <Link 
+            href="/account" 
+            className="p-2 hover:bg-muted rounded-full transition-colors focus-visible:ring-2 focus-visible:ring-primary"
+            aria-label="Account"
+          >
+            <User className="w-6 h-6 text-foreground" />
+            {user && (
+              <span className="sr-only">Logged in as {user.email}</span>
+            )}
           </Link>
-          <Link href="/cart" className="p-2 hover:bg-gray-100 rounded-full">
-            <ShoppingCartIcon className="w-6 h-6 text-gray-700" />
+          <Link 
+            href="/cart" 
+            className="p-2 hover:bg-muted rounded-full transition-colors relative focus-visible:ring-2 focus-visible:ring-primary"
+            aria-label={`Cart with ${cartCount} items`}
+          >
+            <ShoppingCart className="w-6 h-6 text-foreground" />
+            {cartCount > 0 && (
+              <span className="absolute -top-1 -right-1 bg-primary text-primary-foreground text-xs font-bold w-5 h-5 rounded-full flex items-center justify-center">
+                {cartCount > 99 ? '99+' : cartCount}
+              </span>
+            )}
           </Link>
         </div>
       </div>
 
-      {/* Bottom navigation */}
-      <nav className="border-t border-gray-200">
+      {/* Desktop navigation */}
+      <nav className="hidden lg:block border-t border-border">
         <div className="container mx-auto px-4">
-          <ul className="flex flex-wrap justify-center gap-6 py-3 text-sm font-medium">
-            {navLinks.map((link) => (
-              <li key={link.name}>
-                <Link
-                  href={link.href}
-                  className={`hover:text-green-600 ${
-                    pathname === link.href
-                      ? 'text-green-700 border-b-2 border-green-500'
-                      : 'text-gray-600'
-                  }`}
-                >
-                  {link.name}
-                </Link>
-              </li>
-            ))}
+          <ul className="flex flex-wrap justify-center gap-8 py-3 text-sm font-medium">
+            {navLinks.map((link) => {
+              const isActive = pathname === link.href || 
+                (link.href.includes('?') && pathname.includes(link.href.split('?')[0]));
+              return (
+                <li key={link.name}>
+                  <Link
+                    href={link.href}
+                    className={`py-2 transition-colors hover:text-primary ${
+                      isActive
+                        ? 'text-primary border-b-2 border-primary'
+                        : 'text-muted-foreground'
+                    }`}
+                  >
+                    {link.name}
+                  </Link>
+                </li>
+              );
+            })}
           </ul>
         </div>
       </nav>
+
+      {/* Mobile navigation */}
+      {mobileMenuOpen && (
+        <nav className="lg:hidden border-t border-border bg-card">
+          <ul className="flex flex-col py-2">
+            {navLinks.map((link) => {
+              const isActive = pathname === link.href;
+              return (
+                <li key={link.name}>
+                  <Link
+                    href={link.href}
+                    onClick={() => setMobileMenuOpen(false)}
+                    className={`block px-4 py-3 transition-colors hover:bg-muted ${
+                      isActive
+                        ? 'text-primary bg-secondary'
+                        : 'text-muted-foreground'
+                    }`}
+                  >
+                    {link.name}
+                  </Link>
+                </li>
+              );
+            })}
+          </ul>
+        </nav>
+      )}
     </header>
   );
 }
