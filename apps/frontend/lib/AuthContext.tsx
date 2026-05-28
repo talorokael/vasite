@@ -140,6 +140,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       await apiClient.logout();
 
       toast.success('Logged out successfully');
+      localStorage.removeItem('guestCart');
     } finally {
       setUser(null);
 

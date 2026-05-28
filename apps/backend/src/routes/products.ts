@@ -105,9 +105,25 @@ router.get("/", async (req: Request, res: Response) => {
     const limit = parseInt(req.query.limit as string) || 20;
     const skip = (page - 1) * limit;
 
-    const totalCount = await prisma.product.count();
+    // NEW: category filter
+    const categoryName = req.query.category as string;
 
+    const where: Prisma.ProductWhereInput = {};
+
+    if (categoryName) {
+      where.category = {
+        name: { equals: categoryName, mode: "insensitive" },
+      };
+    }
+
+    // Apply filter to count
+    const totalCount = await prisma.product.count({
+      where,
+    });
+
+    // Apply filter to findMany
     const products = await prisma.product.findMany({
+      where,
       skip,
       take: limit,
       include: {
@@ -173,7 +189,7 @@ router.post("/", authenticate, requireRole(["ADMIN"]), async (req, res) => {
 
     const product = await prisma.product.create({ data: createData });
     clearCache("dashboard-stats");
-    clearCache("products"); 
+    clearCache("products");
     res.status(201).json(product);
   } catch (error: unknown) {
     console.error("Error creating product:", error);
@@ -207,8 +223,8 @@ router.put("/:id", authenticate, requireRole(["ADMIN"]), async (req, res) => {
   });
 
   res.json(updatedProduct);
-  clearCache('dashboard-stats');
-  clearCache('products');
+  clearCache("dashboard-stats");
+  clearCache("products");
 });
 
 // DELETE /api/products/:id
@@ -243,8 +259,8 @@ router.delete(
 
       // 204 = successful request, no response body
       res.status(204).send();
-      clearCache('dashboard-stats');
-      clearCache('products');
+      clearCache("dashboard-stats");
+      clearCache("products");
     } catch (error: unknown) {
       console.error("Error deleting product:", error);
       res.status(500).json({ error: "Failed to delete product" });

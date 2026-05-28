@@ -1,17 +1,42 @@
 // apps/backend/prisma/seed.ts
-import 'dotenv/config'
-import { hash } from 'bcrypt'
-import { ProductType, StrainType, Role } from '@prisma/client'
+import 'dotenv/config';
+import { hash } from 'bcrypt';
+import { ProductType, StrainType, Role } from '@prisma/client';
+import { prisma } from '../src/lib/prisma.js';
 
-// IMPORTANT: reuse the runtime Prisma client
-import { prisma } from '../src/lib/prisma.js'
-
-console.log('DATABASE_URL is set:', !!process.env.DATABASE_URL)
+console.log('DATABASE_URL is set:', !!process.env.DATABASE_URL);
 
 async function main() {
-  console.log('Starting seed...')
+  console.log('Starting seed – replacing categories...');
 
-  const adminPassword = await hash('admin123', 10)
+  // 1. Delete existing products and categories (in correct order)
+  console.log('Clearing existing products and categories...');
+  await prisma.cartItem.deleteMany();   // clears cart items first
+  await prisma.cart.deleteMany();       // then carts
+  await prisma.orderItem.deleteMany();  // order items
+  await prisma.order.deleteMany();      // orders
+  await prisma.product.deleteMany();    // products
+  await prisma.category.deleteMany();   // categories
+
+  // 2. Recreate the six new categories
+  const categoryNames = ['Hair', 'Body', 'Face', 'Flower', 'Edible', 'Apothecary'];
+  const categories = await Promise.all(
+    categoryNames.map(async (name) => {
+      const slug = name.toLowerCase();
+      return prisma.category.create({
+        data: {
+          name,
+          description: `${name} products`,
+          slug,
+        },
+      });
+    })
+  );
+
+  console.log(`Created ${categories.length} categories:`, categories.map(c => c.name));
+
+  // 3. Ensure admin and test user exist (preserve existing users)
+  const adminPassword = await hash('admin123', 10);
   const admin = await prisma.user.upsert({
     where: { email: 'admin@verdeafrique.com' },
     update: {},
@@ -21,9 +46,9 @@ async function main() {
       passwordHash: adminPassword,
       role: Role.ADMIN,
     },
-  })
+  });
 
-  const userPassword = await hash('user123', 10)
+  const userPassword = await hash('user123', 10);
   await prisma.user.upsert({
     where: { email: 'customer@example.com' },
     update: {},
@@ -33,89 +58,81 @@ async function main() {
       passwordHash: userPassword,
       role: Role.USER,
     },
-  })
+  });
 
-  const categories = await Promise.all([
-    prisma.category.upsert({
-      where: { slug: 'tinctures' },
-      update: {},
-      create: {
-        name: 'Tinctures',
-        description: 'CBD and THC oil extracts',
-        slug: 'tinctures',
-      },
-    }),
-    prisma.category.upsert({
-      where: { slug: 'flowers' },
-      update: {},
-      create: {
-        name: 'Flowers',
-        description: 'Dried cannabis flower',
-        slug: 'flowers',
-      },
-    }),
-    prisma.category.upsert({
-      where: { slug: 'edibles' },
-      update: {},
-      create: {
-        name: 'Edibles',
-        description: 'Cannabis-infused food products',
-        slug: 'edibles',
-      },
-    }),
-  ])
+  // 4. Add sample products for each new category (optional)
+  const sampleProducts = [
+    {
+      name: 'Nourishing Hair Oil',
+      sku: 'HAIR-001',
+      description: 'Rich oil for hair growth and scalp health.',
+      price: 2999,
+      productType: ProductType.TINCTURE,
+      categoryId: categories.find(c => c.name === 'Hair')!.id,
+    },
+    {
+      name: 'Body Butter Cream',
+      sku: 'BODY-001',
+      description: 'Hydrating body lotion with shea butter.',
+      price: 2499,
+      productType: ProductType.TOPICAL,
+      categoryId: categories.find(c => c.name === 'Body')!.id,
+    },
+    {
+      name: 'Facial Serum',
+      sku: 'FACE-001',
+      description: 'Anti‑aging serum with CBD.',
+      price: 3999,
+      productType: ProductType.TOPICAL,
+      categoryId: categories.find(c => c.name === 'Face')!.id,
+    },
+    {
+      name: 'Premium Flower – Sativa',
+      sku: 'FLOWER-001',
+      description: 'Dried sativa flower.',
+      price: 4500,
+      productType: ProductType.FLOWER,
+      strainType: StrainType.SATIVA,
+      categoryId: categories.find(c => c.name === 'Flower')!.id,
+    },
+    {
+      name: 'CBD Gummies 500mg',
+      sku: 'EDIBLE-001',
+      description: 'Mixed fruit gummies.',
+      price: 3500,
+      productType: ProductType.EDIBLE,
+      categoryId: categories.find(c => c.name === 'Edible')!.id,
+    },
+    {
+      name: 'Herbal Apothecary Kit',
+      sku: 'APOTH-001',
+      description: 'Wellness bundle with tinctures and teas.',
+      price: 5999,
+      productType: ProductType.TINCTURE,
+      categoryId: categories.find(c => c.name === 'Apothecary')!.id,
+    },
+  ];
 
-  await Promise.all([
-    prisma.product.upsert({
-      where: { sku: 'CBD-OIL-001' },
+  for (const product of sampleProducts) {
+    await prisma.product.upsert({
+      where: { sku: product.sku },
       update: {},
       create: {
-        name: 'Premium CBD Oil',
-        sku: 'CBD-OIL-001',
-        description: 'High-quality full-spectrum CBD tincture.',
-        price: 5999,
-        productType: ProductType.TINCTURE,
-        categoryId: categories[0].id,
+        ...product,
         userId: admin.id,
       },
-    }),
-    prisma.product.upsert({
-      where: { sku: 'FLOWER-SD-002' },
-      update: {},
-      create: {
-        name: 'Sativa Flower - Sour Diesel',
-        sku: 'FLOWER-SD-002',
-        description: 'Energetic and uplifting sativa strain.',
-        price: 4500,
-        productType: ProductType.FLOWER,
-        strainType: StrainType.SATIVA,
-        categoryId: categories[1].id,
-        userId: admin.id,
-      },
-    }),
-    prisma.product.upsert({
-      where: { sku: 'GUMMIES-500-003' },
-      update: {},
-      create: {
-        name: 'CBD Gummies 500mg',
-        sku: 'GUMMIES-500-003',
-        description: 'Mixed fruit flavored CBD gummies.',
-        price: 3500,
-        productType: ProductType.EDIBLE,
-        categoryId: categories[2].id,
-        userId: admin.id,
-      },
-    }),
-  ])
+    });
+  }
 
-  console.log('Seed completed successfully!')
+  console.log(`Added ${sampleProducts.length} sample products.`);
+  console.log('Seed completed successfully!');
 }
 
 main()
   .catch((e) => {
-    console.error('Seed failed:', e)
-    process.exit(1)
+    console.error('Seed failed:', e);
+    process.exit(1);
   })
   .finally(async () => {
-    await prisma.$disconnect()
-  })
+    await prisma.$disconnect();
+  });

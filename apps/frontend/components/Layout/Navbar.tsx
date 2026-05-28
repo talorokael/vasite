@@ -2,27 +2,61 @@
 'use client';
 
 import Link from 'next/link';
+import { usePathname } from 'next/navigation';
+import { ShoppingCartIcon, UserIcon } from '@heroicons/react/24/outline';
 
+const navLinks = [
+  { name: 'Hair', href: '/products?category=hair' },
+  { name: 'Body', href: '/products?category=body' },
+  { name: 'Face', href: '/products?category=face' },
+  { name: 'Flower', href: '/products?category=flower' },
+  { name: 'Edible', href: '/products?category=edible' },
+  { name: 'Apothecary', href: '/products?category=apothecary' },
+  { name: 'About Us', href: '/about' },
+];
 
 export default function Navbar() {
-  
+  const pathname = usePathname();
 
   return (
-    <nav className="bg-white shadow-lg">
-      <div className="container mx-auto px-4">
-        <div className="flex justify-between items-center py-4">
-          <div className="font-bold text-2xl text-green-700">VerdeAfrique</div>
-          
-          <div className="hidden md:flex space-x-8">
-            <Link href="/" className="text-gray-700 hover:text-green-600">Products</Link>
-            <a href="#" className="text-gray-700 hover:text-green-600">Categories</a>
-            <a href="#" className="text-gray-700 hover:text-green-600">About</a>
-            <button className="bg-green-500 text-white px-6 py-2 rounded hover:bg-green-600">
-              Login
-            </button>
-          </div>
+    <header className="bg-white shadow-md sticky top-0 z-50">
+      {/* Top row */}
+      <div className="container mx-auto px-4 py-3 flex items-center justify-between">
+        <div className="w-14" />
+        <Link href="/" className="text-2xl font-bold text-green-700">
+          VerdeAfrique
+        </Link>
+        <div className="flex items-center gap-4">
+          <Link href="/account" className="p-2 hover:bg-gray-100 rounded-full">
+            <UserIcon className="w-6 h-6 text-gray-700" />
+          </Link>
+          <Link href="/cart" className="p-2 hover:bg-gray-100 rounded-full">
+            <ShoppingCartIcon className="w-6 h-6 text-gray-700" />
+          </Link>
         </div>
       </div>
-    </nav>
+
+      {/* Bottom navigation */}
+      <nav className="border-t border-gray-200">
+        <div className="container mx-auto px-4">
+          <ul className="flex flex-wrap justify-center gap-6 py-3 text-sm font-medium">
+            {navLinks.map((link) => (
+              <li key={link.name}>
+                <Link
+                  href={link.href}
+                  className={`hover:text-green-600 ${
+                    pathname === link.href
+                      ? 'text-green-700 border-b-2 border-green-500'
+                      : 'text-gray-600'
+                  }`}
+                >
+                  {link.name}
+                </Link>
+              </li>
+            ))}
+          </ul>
+        </div>
+      </nav>
+    </header>
   );
 }
