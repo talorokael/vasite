@@ -9,12 +9,10 @@ import { useAuth } from '@/lib/AuthContext';
 import { useState } from 'react';
 
 const navLinks = [
-  { name: 'Hair', href: '/products?category=hair' },
-  { name: 'Body', href: '/products?category=body' },
-  { name: 'Face', href: '/products?category=face' },
-  { name: 'Flower', href: '/products?category=flower' },
-  { name: 'Edible', href: '/products?category=edible' },
-  { name: 'Apothecary', href: '/products?category=apothecary' },
+  { name: 'Cosmetics', href: '/cosmetics' },
+  { name: 'Flower', href: '/flower' },
+  { name: 'Edible', href: '/edible' },
+  { name: 'Apothecary', href: '/apothecary' },
   { name: 'About Us', href: '/about' },
 ];
 
