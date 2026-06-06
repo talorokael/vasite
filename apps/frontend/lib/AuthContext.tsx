@@ -47,11 +47,12 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         const response = await apiClient.getMe();
         setUser(response.user);
       } catch (error: unknown) {
-        if (error instanceof Error && !error.message.includes('401')) {
+        // Silently ignore authentication errors (401 / "Authentication required")
+        if (error instanceof Error && 
+            !error.message.includes('401') && 
+            !error.message.includes('Authentication required')) {
           console.error('Auth initialization failed:', error);
         }
-
-        // If 401, token is invalid/expired
       } finally {
         setIsLoading(false);
       }
