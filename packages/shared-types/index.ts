@@ -1,4 +1,5 @@
 export interface User {
+  _count: { addresses: number; orders: number; };
   id: string;
   email: string;
   name: string | null;

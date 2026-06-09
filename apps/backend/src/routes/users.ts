@@ -26,10 +26,13 @@ router.get('/', authenticate, requireRole(['ADMIN']), async (req, res) => {
         createdAt: true,
         updatedAt: true,
         _count: {
-          select: { products: true, sessions: true, addresses: true, orders: true }
-        }
+          select: {
+            addresses: true,
+            orders: true,
+          },
+        },
       },
-      orderBy: { createdAt: 'desc' }
+      orderBy: { createdAt: 'desc' },
     });
 
     res.json({

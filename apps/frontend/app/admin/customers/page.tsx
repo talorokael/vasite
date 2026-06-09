@@ -9,9 +9,14 @@ type UserRow = {
   id: string;
   email: string;
   name: string | null;
+  role: 'ADMIN' | 'USER';
   createdAt: string;
-  _count: { addresses?: number; orders?: number };
-  phone?: string | null;
+  updatedAt: string;
+  phone: string | null;
+  _count: {
+    addresses: number;
+    orders: number;
+  };
 };
 
 export default function AdminCustomersPage() {
@@ -27,7 +32,16 @@ export default function AdminCustomersPage() {
       setLoading(true);
       try {
         const res = await apiClient.getUsers({ page: 1, limit: 50 });
-        const rows: UserRow[] = res.users.map(u => ({ ...u, phone: null }));
+        const rows: UserRow[] = res.users.map(u => ({
+  id: u.id,
+  email: u.email,
+  name: u.name,
+  role: u.role,
+  createdAt: u.createdAt.toString(), // convert Date to string
+  updatedAt: u.updatedAt.toString(),
+  phone: null,
+  _count: u._count || { addresses: 0, orders: 0 }, // provide default if missing
+}));
 
         // Fetch default phone for each user (best-effort)
         await Promise.all(rows.map(async (r) => {
