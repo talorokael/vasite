@@ -8,7 +8,7 @@ const router: express.Router = express.Router();
 // GET /api/admin/users/:userId/addresses (admin only)
 router.get('/:userId/addresses', authenticate, requireRole(['ADMIN']), async (req, res) => {
   try {
-    const { userId } = req.params;
+    const userId = req.params.userId as string;
     if (!userId) return res.status(400).json({ error: 'userId is required' });
 
     const addresses = await prisma.address.findMany({
@@ -37,7 +37,7 @@ router.get('/:userId/addresses', authenticate, requireRole(['ADMIN']), async (re
 // GET /api/admin/users/:userId/orders (admin only)
 router.get('/:userId/orders', authenticate, requireRole(['ADMIN']), async (req, res) => {
   try {
-    const { userId } = req.params;
+    const userId = req.params.userId as string;
     if (!userId) return res.status(400).json({ error: 'userId is required' });
 
     const orders = await prisma.order.findMany({
