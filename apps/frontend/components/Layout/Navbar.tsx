@@ -96,6 +96,16 @@ export default function Navbar() {
                 </li>
               );
             })}
+            {user && user.role === 'ADMIN' && (
+              <li>
+                <Link
+                  href="/admin"
+                  className={`py-2 transition-colors hover:text-primary ${pathname.startsWith('/admin') ? 'text-primary border-b-2 border-primary' : 'text-muted-foreground'}`}
+                >
+                  Admin
+                </Link>
+              </li>
+            )}
           </ul>
         </div>
       </nav>

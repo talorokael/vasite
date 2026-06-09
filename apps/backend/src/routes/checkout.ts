@@ -13,8 +13,23 @@ router.post('/create-session', authenticate, async (req, res) => {
     return res.status(401).json({ error: 'Unauthorized' });
   }
 
+  const { addressId } = req.body;
+
+  if (!addressId) {
+    return res.status(400).json({ error: 'Shipping address required' });
+  }
+
   try {
     const userId = req.user.id;
+
+    // Verify address belongs to the user
+    const address = await prisma.address.findFirst({
+      where: { id: addressId, userId },
+    });
+
+    if (!address) {
+      return res.status(404).json({ error: 'Address not found' });
+    }
 
     // Get cart with items and products
     const cart = await prisma.cart.findUnique({
@@ -26,7 +41,7 @@ router.post('/create-session', authenticate, async (req, res) => {
       return res.status(400).json({ error: 'Cart is empty' });
     }
 
-    // Calculate total in cents (kobo/cent equivalent)
+    // Calculate total in cents (Paystack amount is in the smallest currency unit, e.g., cents for ZAR)
     const totalCents = cart.items.reduce(
       (sum, item) => sum + item.product.price * item.quantity,
       0
@@ -53,6 +68,7 @@ router.post('/create-session', authenticate, async (req, res) => {
         metadata: {
           userId,
           cartId: cart.id,
+          shippingAddressId: addressId, // store address for webhook
         },
       },
       {
@@ -64,6 +80,9 @@ router.post('/create-session', authenticate, async (req, res) => {
     );
 
     const { authorization_url, reference } = response.data.data;
+
+    // Optionally store the reference + addressId in a temporary table or just rely on metadata
+    // The webhook will create the order using the metadata
 
     res.json({ url: authorization_url, reference });
   } catch (error) {

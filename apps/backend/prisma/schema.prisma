@@ -19,7 +19,7 @@ model User {
   sessions     Session[]
   cart         Cart[]
   orders       Order[]   
-  
+  addresses    Address[]
 
   @@map("users")
 }
@@ -77,8 +77,9 @@ model Product {
   updatedAt      DateTime    @updatedAt
   category       Category?   @relation(fields: [categoryId], references: [id])
   user           User?       @relation(fields: [userId], references: [id])
-  items     CartItem[]
+  items          CartItem[]
   orderItems     OrderItem[]
+
   @@index([isAvailable])
   @@index([categoryId])
   @@index([name])
@@ -92,7 +93,6 @@ model Cart {
   items     CartItem[]
   createdAt DateTime    @default(now())
   updatedAt DateTime    @updatedAt
-  
 
   @@map("carts")
 }
@@ -111,6 +111,25 @@ model CartItem {
   @@map("cart_items")
 }
 
+model Address {
+  id         String   @id @default(cuid())
+  userId     String
+  user       User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  name       String   // e.g., "Home" or "Work"
+  street     String
+  city       String
+  postalCode String
+  country    String   @default("South Africa")
+  phone      String
+  isDefault  Boolean  @default(false)
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @updatedAt
+
+  orders     Order[]  // orders shipped to this address
+
+  @@map("addresses")
+}
+
 model Order {
   id               String      @id @default(cuid())
   userId           String
@@ -118,6 +137,11 @@ model Order {
   total            Float
   status           String      @default("pending")
   stripeSessionId  String?     @unique
+  shippingAddressId String?     // snapshot of the address used
+  shippingAddress   Address?    @relation(fields: [shippingAddressId], references: [id])
+  trackingNumber   String?      // Courier Guy tracking number
+  courierStatus    String?      // "pending", "in_transit", "delivered"
+  courierUpdatedAt DateTime?
   createdAt        DateTime    @default(now())
   updatedAt        DateTime    @updatedAt
   items            OrderItem[]

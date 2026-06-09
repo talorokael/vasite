@@ -277,6 +277,32 @@ export class ApiClient {
       body: JSON.stringify({ status }),
     });
   }
+
+  // Admin: get addresses for a specific user
+  async getAdminUserAddresses(userId: string): Promise<{ addresses: Array<{
+    id: string;
+    name?: string | null;
+    street: string;
+    city: string;
+    postalCode?: string | null;
+    country?: string | null;
+    phone?: string | null;
+    isDefault: boolean;
+  }> }>
+  {
+    return this.request(`/api/admin/users/${userId}/addresses`);
+  }
+
+  // Admin: get orders for a specific user
+  async getAdminUserOrders(userId: string): Promise<{ orders: Array<{
+    id: string;
+    total: number;
+    status: string;
+    createdAt: string;
+  }> }>
+  {
+    return this.request(`/api/admin/users/${userId}/orders`);
+  }
 }
 
 export const apiClient = new ApiClient();

@@ -9,10 +9,10 @@ const WEBHOOK_SECRET = process.env.PAYSTACK_WEBHOOK_SECRET;
 export const handlePaystackWebhook = async (req: Request, res: Response) => {
   console.log('🔔 WEBHOOK REACHED THE SERVER');
 
-  // Get raw body as string (Buffer from express.raw)
+  // Get raw body as string
   const rawBody = (req.body as Buffer).toString('utf8');
 
-  // Verify signature using raw body
+  // Verify signature
   const signature = req.headers['x-paystack-signature'] as string;
   if (WEBHOOK_SECRET) {
     const hash = crypto
@@ -25,7 +25,6 @@ export const handlePaystackWebhook = async (req: Request, res: Response) => {
     }
   }
 
-  // Parse JSON after signature verification
   const payload = JSON.parse(rawBody);
   const event = payload;
 
@@ -34,6 +33,7 @@ export const handlePaystackWebhook = async (req: Request, res: Response) => {
     const reference = transaction.reference;
     const metadata = transaction.metadata;
     const userId = metadata?.userId;
+    const shippingAddressId = metadata?.shippingAddressId;
 
     if (!userId) {
       console.error('No userId in webhook metadata');
@@ -67,22 +67,34 @@ export const handlePaystackWebhook = async (req: Request, res: Response) => {
       return res.status(400).send('Cart empty');
     }
 
-    // Idempotency: check for an existing order with this Paystack reference
+    // Idempotency: check for existing order with this reference
     const existingOrder = await prisma.order.findFirst({
       where: { stripeSessionId: reference },
     });
 
     if (existingOrder) {
-      console.log(`[Webhook] Order already exists for reference ${reference}, skipping creation`);
+      console.log(`Order already exists for reference ${reference}, skipping creation`);
       return res.status(200).json({ received: true, duplicate: true });
     }
 
+    // Verify shipping address exists if provided (optional)
+    let addressId = null;
+    if (shippingAddressId) {
+      const address = await prisma.address.findUnique({
+        where: { id: shippingAddressId },
+      });
+      if (address) addressId = address.id;
+      else console.warn(`Shipping address ${shippingAddressId} not found`);
+    }
+
+    // Create order with shipping address and items
     const order = await prisma.order.create({
       data: {
         userId,
         total: transaction.amount / 100,
         status: 'paid',
         stripeSessionId: reference,
+        shippingAddressId: addressId,
         items: {
           create: cart.items.map((item) => ({
             productId: item.productId,
@@ -93,6 +105,7 @@ export const handlePaystackWebhook = async (req: Request, res: Response) => {
       },
     });
 
+    // Clear the cart after successful order creation
     await prisma.cartItem.deleteMany({ where: { cartId: cart.id } });
     console.log(`Order ${order.id} created, cart cleared for user ${userId}`);
   }

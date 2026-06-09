@@ -19,8 +19,9 @@ import categoriesRoutes from './routes/categories.js';
 import productRoutes from './routes/products.js';
 import statsRouter from './routes/stats.js';
 import ordersRouter from './routes/orders.js';
+import adminUsersRouter from './routes/adminUsers.js';
 import checkoutRouter from './routes/checkout.js';
-
+import addressRouter from './routes/address.js';
 import { handlePaystackWebhook } from './webhooks/paystack.js';
 import { perUserRateLimit } from './middleware/perUserRateLimit.js';
 import { globalAuth } from './middleware/globalAuth.js';
@@ -116,9 +117,11 @@ app.use('/api/categories', categoriesRoutes);
 app.use('/api/products', productRoutes);
 app.use('/api/users', usersRouter);
 app.use('/api/admin/stats', statsRouter);
+app.use('/api/admin/users', adminUsersRouter);
 app.use('/api/cart', cartRoutes);
 app.use('/api/orders', ordersRouter);
 app.use('/api/checkout', checkoutRouter);
+app.use('/api/address', addressRouter);
 
 /**
  * HEALTH CHECK

@@ -3,7 +3,7 @@
 
 import { useCart } from '@/lib/CartContext';
 import { useAuth } from '@/lib/AuthContext';
-import { apiClient } from '@/lib/api-client';
+import { useRouter } from 'next/navigation';
 import ImageWithFallback from '@/components/ImageWithFallback';
 import EmptyState from '@/components/EmptyState';
 import SkeletonCart from '@/components/SkeletonCart';
@@ -15,6 +15,7 @@ import { Trash2, Minus, Plus, ShoppingBag, Loader2, CreditCard } from 'lucide-re
 export default function CartPage() {
   const { cart, isLoading, updateQuantity, removeItem, cartCount } = useCart();
   const { user } = useAuth();
+  const router = useRouter();
   const [isCheckingOut, setIsCheckingOut] = useState(false);
   const [updatingItems, setUpdatingItems] = useState<Set<string>>(new Set());
 
@@ -23,19 +24,14 @@ export default function CartPage() {
     
     if (!user) {
       toast.error('Please login to checkout');
+      router.push('/login?redirect=/cart');
       return;
     }
 
     setIsCheckingOut(true);
-    try {
-      const { url } = await apiClient.createCheckoutSession();
-      window.location.href = url;
-    } catch (error) {
-      console.error('Checkout error:', error);
-      toast.error('Failed to start checkout. Please try again.');
-    } finally {
-      setIsCheckingOut(false);
-    }
+    // Redirect to address selection page for two-step checkout
+    router.push('/checkout/address');
+    setIsCheckingOut(false);
   };
 
   const handleUpdateQuantity = async (itemId: string, newQuantity: number) => {
@@ -83,7 +79,7 @@ export default function CartPage() {
               Please login to view your cart and checkout.
             </p>
             <Link
-              href="/login"
+              href="/login?redirect=/cart"
               className="inline-flex items-center justify-center bg-primary text-primary-foreground px-6 py-3 rounded-md font-medium hover:bg-primary/90 transition-colors"
             >
               Login to Continue

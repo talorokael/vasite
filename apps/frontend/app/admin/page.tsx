@@ -56,6 +56,20 @@ export default function AdminDashboard() {
           </Link>
 
           <Link
+            href="/admin/customers"
+            className="flex items-center gap-4 p-4 bg-muted hover:bg-muted/80 rounded-lg transition-colors group"
+          >
+            <div className="w-12 h-12 bg-emerald-500/10 rounded-lg flex items-center justify-center">
+              <Users className="w-6 h-6 text-emerald-500" />
+            </div>
+            <div className="flex-1">
+              <p className="font-medium text-foreground">Customers</p>
+              <p className="text-sm text-muted-foreground">View customer addresses and orders</p>
+            </div>
+            <ArrowRight className="w-5 h-5 text-muted-foreground group-hover:text-emerald-500 transition-colors" />
+          </Link>
+
+          <Link
             href="/admin/orders"
             className="flex items-center gap-4 p-4 bg-muted hover:bg-muted/80 rounded-lg transition-colors group"
           >
