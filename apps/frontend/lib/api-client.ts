@@ -290,7 +290,7 @@ export class ApiClient {
     isDefault: boolean;
   }> }>
   {
-    return this.request(`/api/admin/users/${userId}/addresses`);
+    return this.request(`/api/users/${userId}/addresses`);
   }
 
   // Admin: get orders for a specific user
@@ -301,7 +301,7 @@ export class ApiClient {
     createdAt: string;
   }> }>
   {
-    return this.request(`/api/admin/users/${userId}/orders`);
+    return this.request(`/api/users/${userId}/orders`);
   }
 }
 

@@ -107,3 +107,47 @@ router.delete('/:id', authenticate, requireRole(['ADMIN']), async (req, res) => 
 });
 
 export default router;
+
+// GET /api/users/:userId/addresses (admin only)
+router.get('/:userId/addresses', authenticate, requireRole(['ADMIN']), async (req, res) => {
+  try {
+    const userId = req.params.userId as string;
+    if (!userId) {
+      return res.status(400).json({ error: 'User ID required' });
+    }
+
+    const addresses = await prisma.address.findMany({
+      where: { userId },
+      orderBy: { isDefault: 'desc' },
+    });
+    res.json({ addresses });
+  } catch (error) {
+    console.error('Error fetching user addresses:', error);
+    res.status(500).json({ error: 'Failed to fetch addresses' });
+  }
+});
+
+// GET /api/users/:userId/orders (admin only)
+router.get('/:userId/orders', authenticate, requireRole(['ADMIN']), async (req, res) => {
+  try {
+    const userId = req.params.userId as string;
+    if (!userId) {
+      return res.status(400).json({ error: 'User ID required' });
+    }
+
+    const orders = await prisma.order.findMany({
+      where: { userId },
+      orderBy: { createdAt: 'desc' },
+      select: {
+        id: true,
+        total: true,
+        status: true,
+        createdAt: true,
+      },
+    });
+    res.json({ orders });
+  } catch (error) {
+    console.error('Error fetching user orders:', error);
+    res.status(500).json({ error: 'Failed to fetch orders' });
+  }
+});

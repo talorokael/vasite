@@ -1,7 +1,7 @@
-'use client';
+"use client";
 
 import { useEffect, useState } from 'react';
-import { useRouter } from 'next/navigation';
+import { useParams, useRouter } from 'next/navigation';
 import { useAuth } from '@/lib/AuthContext';
 import { apiClient } from '@/lib/api-client';
 import Link from 'next/link';
@@ -24,8 +24,9 @@ type OrderRow = {
   createdAt: string;
 };
 
-export default function CustomerDetailPage({ params }: { params: { id: string }}) {
-  const { id } = params;
+export default function CustomerDetailPage() {
+  const params = useParams();
+  const id = params.id as string;
   const { user } = useAuth();
   const router = useRouter();
 
