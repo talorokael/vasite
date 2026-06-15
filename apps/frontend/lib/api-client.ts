@@ -215,11 +215,11 @@ export class ApiClient {
         limit: number;
         totalPages: number;
       };
-    }>(`/api/users?${query.toString()}`);
+    }>(`/api/admin/users?${query.toString()}`);
   }
 
   async updateUserRole(id: string, role: string): Promise<User> {
-    return this.request<User>(`/api/users/${id}`, {
+    return this.request<User>(`/api/admin/users/${id}`, {
       method: "PUT",
       body: JSON.stringify({ role }),
     });
@@ -290,7 +290,7 @@ export class ApiClient {
     isDefault: boolean;
   }> }>
   {
-    return this.request(`/api/users/${userId}/addresses`);
+    return this.request(`/api/admin/users/${userId}/addresses`);
   }
 
   // Admin: get orders for a specific user
@@ -301,7 +301,7 @@ export class ApiClient {
     createdAt: string;
   }> }>
   {
-    return this.request(`/api/users/${userId}/orders`);
+    return this.request(`/api/admin/users/${userId}/orders`);
   }
 }
 
