@@ -32,15 +32,22 @@ router.get('/', authenticate, requireRole(['ADMIN']), async (req, res) => {
 // PATCH /api/admin/orders/:id/status
 router.patch('/:id/status', authenticate, requireRole(['ADMIN']), async (req, res) => {
   try {
-    const { id } = req.params;
-    const { status } = req.body;
+    const rawId = req.params.id;
+    if (!rawId || Array.isArray(rawId)) {
+      return res.status(400).json({ error: 'Invalid order ID' });
+    }
+    const id = rawId;
 
+    const { status } = req.body;
     const allowedStatuses = ['pending', 'paid', 'processing', 'shipped', 'delivered', 'refunded'];
     if (!allowedStatuses.includes(status)) {
       return res.status(400).json({ error: 'Invalid status' });
     }
 
-    const updated = await prisma.order.update({ where: { id }, data: { status } });
+    const updated = await prisma.order.update({
+      where: { id },
+      data: { status },
+    });
     res.json(updated);
   } catch (error) {
     console.error('Error updating order status (admin):', error);
