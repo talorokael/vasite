@@ -5,6 +5,12 @@ import { requireRole } from '../middleware/rbac.js';
 
 const router: express.Router = express.Router();
 
+// Helper to safely extract a string parameter from req.params
+function getStringParam(param: string | string[] | undefined): string | null {
+  if (!param || Array.isArray(param)) return null;
+  return param;
+}
+
 // GET /api/admin/users (admin only)
 router.get('/', authenticate, requireRole(['ADMIN']), async (req, res) => {
   try {
@@ -52,10 +58,10 @@ router.get('/', authenticate, requireRole(['ADMIN']), async (req, res) => {
 // PUT /api/admin/users/:id (admin only) — update user role
 router.put('/:id', authenticate, requireRole(['ADMIN']), async (req, res) => {
   try {
-    const { id } = req.params;
+    const id = getStringParam(req.params.id);
     const { role } = req.body;
 
-    if (!id) return res.status(400).json({ error: 'userId is required' });
+    if (!id) return res.status(400).json({ error: 'Invalid user ID' });
 
     const existing = await prisma.user.findUnique({ where: { id } });
     if (!existing) return res.status(404).json({ error: 'User not found' });
@@ -76,8 +82,8 @@ router.put('/:id', authenticate, requireRole(['ADMIN']), async (req, res) => {
 // GET /api/admin/users/:userId/addresses (admin only)
 router.get('/:userId/addresses', authenticate, requireRole(['ADMIN']), async (req, res) => {
   try {
-    const userId = req.params.userId as string;
-    if (!userId) return res.status(400).json({ error: 'userId is required' });
+    const userId = getStringParam(req.params.userId);
+    if (!userId) return res.status(400).json({ error: 'userId is required and must be a string' });
 
     const addresses = await prisma.address.findMany({
       where: { userId },
@@ -105,8 +111,8 @@ router.get('/:userId/addresses', authenticate, requireRole(['ADMIN']), async (re
 // GET /api/admin/users/:userId/orders (admin only)
 router.get('/:userId/orders', authenticate, requireRole(['ADMIN']), async (req, res) => {
   try {
-    const userId = req.params.userId as string;
-    if (!userId) return res.status(400).json({ error: 'userId is required' });
+    const userId = getStringParam(req.params.userId);
+    if (!userId) return res.status(400).json({ error: 'userId is required and must be a string' });
 
     const orders = await prisma.order.findMany({
       where: { userId },
