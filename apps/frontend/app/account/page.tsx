@@ -80,6 +80,12 @@ export default function AccountPage() {
 
           <div className="space-y-3">
             <Link
+              href="/account/addresses"
+              className="w-full flex items-center justify-center gap-2 bg-muted text-foreground py-3 px-4 rounded-md font-medium hover:bg-muted/90 transition-colors focus-visible:ring-2 focus-visible:ring-ring"
+            >
+              Manage Addresses
+            </Link>
+            <Link
               href="/account/orders"
               className="w-full flex items-center justify-center gap-2 bg-primary text-primary-foreground py-3 px-4 rounded-md font-medium hover:bg-primary/90 transition-colors focus-visible:ring-2 focus-visible:ring-ring"
             >
