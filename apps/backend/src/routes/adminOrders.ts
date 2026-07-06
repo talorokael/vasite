@@ -1,4 +1,5 @@
 import { Router } from 'express';
+import { Prisma } from '@prisma/client';
 import { prisma } from '../lib/prisma.js';
 import { createTCGShipment, trackTCGShipment } from '../services/tcg.service.js';
 import { authenticate } from '../middleware/auth.js';
@@ -73,23 +74,58 @@ router.post('/:orderId/ship', authenticate, requireRole(['ADMIN']), async (req, 
     if (!order) return res.status(404).json({ error: 'Order not found' });
     if (!order.shippingAddress) return res.status(400).json({ error: 'No shipping address for order' });
 
-    const items = order.items.map((it) => ({
-      quantity: it.quantity,
-      price: it.price,
-      description: it.product?.name,
-      sku: it.product?.sku,
-      weight: it.product?.weight,
-    }));
+    const items = order.items.map((it) => {
+      const item: {
+        quantity: number;
+        price: number;
+        description: string;
+        weight: number;
+        sku?: string;
+      } = {
+        quantity: it.quantity,
+        price: it.price,
+        description: it.product?.name ?? 'Item',
+        weight: it.product?.weight ?? 0,
+      };
 
-    const shipment = await createTCGShipment(order, order.shippingAddress, items);
+      if (it.product?.sku) {
+        item.sku = it.product.sku;
+      }
+
+      return item;
+    });
+
+    const customerName = order.user.name ?? 'Customer';
+    const shipment = await createTCGShipment(
+      {
+        id: order.id,
+        user: {
+          name: customerName,
+        },
+      },
+      {
+        name: order.shippingAddress?.name ?? customerName,
+        street: order.shippingAddress?.street ?? '',
+        city: order.shippingAddress?.city ?? '',
+        postalCode: order.shippingAddress?.postalCode ?? '',
+        country: order.shippingAddress?.country ?? 'South Africa',
+        phone: order.shippingAddress?.phone ?? '',
+      },
+      items
+    );
+
+    const updateData: Prisma.OrderUpdateInput = {
+      courierUpdatedAt: new Date(),
+    };
+
+    if (shipment.trackingNumber) {
+      updateData.trackingNumber = shipment.trackingNumber;
+      updateData.courierStatus = 'pending';
+    }
 
     await prisma.order.update({
       where: { id },
-      data: {
-        trackingNumber: shipment.trackingNumber,
-        courierStatus: shipment.trackingNumber ? 'pending' : undefined,
-        courierUpdatedAt: shipment.trackingNumber ? new Date() : undefined,
-      },
+      data: updateData,
     });
 
     res.json({ trackingNumber: shipment.trackingNumber, labelUrl: shipment.labelUrl, raw: shipment.raw });

@@ -24,7 +24,7 @@ export interface TcgShipmentResult {
 interface TcgShipmentOrder {
   id: string;
   user?: {
-    name?: string;
+    name?: string | null;
   };
 }
 
