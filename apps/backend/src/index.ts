@@ -23,6 +23,7 @@ import adminUsersRouter from './routes/adminUsers.js';
 import checkoutRouter from './routes/checkout.js';
 import addressRouter from './routes/address.js';
 import { handlePaystackWebhook } from './webhooks/paystack.js';
+import { handleCourierWebhook } from './webhooks/courier.js';
 import { perUserRateLimit } from './middleware/perUserRateLimit.js';
 import { globalAuth } from './middleware/globalAuth.js';
 import { prisma } from './lib/prisma.js';
@@ -79,7 +80,7 @@ app.use(
       if (!origin || allowedOrigins.includes(origin)) {
         callback(null, true);
       } else {
-        callback(new Error('Not allowed by CORS'));
+        callback(null, false);
       }
     },
     credentials: true,
@@ -96,6 +97,12 @@ app.post(
   '/api/webhooks/paystack',
   express.raw({ type: 'application/json' }),
   handlePaystackWebhook
+);
+
+app.post(
+  '/api/webhooks/courier',
+  express.raw({ type: 'application/json' }),
+  handleCourierWebhook
 );
 
 /**

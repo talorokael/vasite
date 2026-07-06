@@ -27,27 +27,38 @@ VerdeAfrique/
 │   │   └── src/
 │   │       ├── index.ts             # Express app, globalAuth, rate limiting, routes, error handler
 │   │       ├── lib/
-│   │       │   ├── auth.ts          # session creation/validation, password hashing
+│   │       │   ├── auth.ts          # session creation/validation, password hashing (bcrypt 12 rounds)
 │   │       │   ├── cache.ts         # TTL cache with getCached() and clearCache(keyPattern?)
+│   │       │   ├── env.ts           # environment variable validation and defaults
+│   │       │   ├── logger.ts        # structured logging utility
 │   │       │   └── prisma.ts        # PrismaClient singleton — forces import 'dotenv/config' at module init, validates DATABASE_URL, uses PrismaPg adapter + pg Pool
 │   │       ├── middleware/
 │   │       │   ├── auth.ts          # authenticate (cookie + header)
 │   │       │   ├── globalAuth.ts    # attaches req.user using session_token cookie (for all requests)
-│   │       │   ├── perUserRateLimit.ts # rate limiter factory using user.id or ipKeyGenerator
-│   │       │   └── rbac.ts          # requireRole (admin / user)
+│   │       │   ├── perUserRateLimit.ts # rate limiter factory using user.id or ipKeyGenerator (IPv6 /56 masking)
+│   │       │   ├── rbac.ts          # requireRole (admin / user)
+│   │       │   └── requestId.ts     # request ID tracking middleware
 │   │       ├── routes/
+│   │       │   ├── address.ts        # Address CRUD (create, list, update, delete, set default)
+│   │       │   ├── adminOrders.ts   # Admin order management (list, status updates, shipment tracking)
+│   │       │   ├── adminUsers.ts    # Admin user list, role management (ADMIN/USER)
 │   │       │   ├── auth.ts          # register, login, logout, getMe (validates session)
 │   │       │   ├── cart.ts          # get cart, add/update/delete items, POST /merge (guest cart merge)
 │   │       │   ├── categories.ts    # list categories (with product counts)
 │   │       │   ├── checkout.ts      # Paystack transaction initialization
-│   │       │   ├── orders.ts        # user order history, admin order management
+│   │       │   ├── health.ts        # health check endpoint (DB latency verification)
+│   │       │   ├── orders.ts        # user order history, order details
 │   │       │   ├── products.ts      # CRUD, pagination, soft delete, calls clearCache() after mutations
 │   │       │   ├── stats.ts         # dashboard counts (cached, cleared on product changes)
 │   │       │   └── users.ts         # list users, change role
+│   │       ├── services/
+│   │       │   ├── email.service.ts # Brevo transactional email (customer + admin notifications)
+│   │       │   ├── sms.service.ts   # SMS notification service (optional)
+│   │       │   └── tcg.service.ts   # Trading card game related service
 │   │       ├── webhooks/
-│   │       │   └── paystack.ts      # handles charge.success, signature verification, order creation, cart clearance
+│   │       │   └── paystack.ts      # handles charge.success, signature verification, idempotency check, order creation, cart clearance, notifications
 │   │       └── types/
-│   │           └── express.d.ts     # extends Request with `user`
+│   │           └── express.d.ts     # extends Request with `user` property
 │   │
 │   └── frontend/
 │       ├── .env.local               # NEXT_PUBLIC_API_URL
