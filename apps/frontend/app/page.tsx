@@ -3,6 +3,7 @@ export const dynamic = "force-dynamic";
 import { Product, Category } from "shared-types";
 import { apiClient } from "@/lib/api-client";
 import HomePageClient from "../components/HomePageClient";
+console.log('🔍 API URL (server):', process.env.NEXT_PUBLIC_API_URL);
 
 export default async function Home() {
   // Default empty states
