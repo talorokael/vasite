@@ -29,7 +29,11 @@ export interface AdminOrder extends Order {
   };
 }
 
-const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:3001";
+const API_BASE_URL =
+  typeof window === "undefined"
+    ? process.env.NEXT_PUBLIC_API_URL_SERVER ||
+      "https://backend-production-dfc8.up.railway.app"
+    : process.env.NEXT_PUBLIC_API_URL || "https://api.verdeafrique.co.za";
 
 export class ApiClient {
   private token: string | null = null; // 👈 add private token storage

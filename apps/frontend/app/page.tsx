@@ -3,12 +3,23 @@ export const dynamic = "force-dynamic";
 import { Product, Category } from "shared-types";
 import { apiClient } from "@/lib/api-client";
 import HomePageClient from "../components/HomePageClient";
-console.log('🔍 API URL (server):', process.env.NEXT_PUBLIC_API_URL);
+
+console.log("🔍 API URL (server):", process.env.NEXT_PUBLIC_API_URL);
 
 export default async function Home() {
+  const API_URL = process.env.NEXT_PUBLIC_API_URL || "https://backend-production-dfc8.up.railway.app";
+
   // Default empty states
   let products: Product[] = [];
   let categories: Category[] = [];
+
+  try {
+    const healthRes = await fetch(`${API_URL}/api/health`);
+    const healthData = await healthRes.json();
+    console.log("Health check from server:", healthData);
+  } catch (err) {
+    console.error("Health check failed:", err);
+  }
 
   // Gracefully handle API failures
   try {
@@ -18,15 +29,23 @@ export default async function Home() {
     });
     products = productsResponse.products;
   } catch (error) {
-    console.error("⚠️ Homepage: Failed to load products", error);
-    // Continue with empty array – UI will show "No products"
+    console.error("⚠️ Homepage: Failed to load products");
+    console.error(
+      "Error message:",
+      error instanceof Error ? error.message : String(error),
+    );
+    console.error("Error stack:", error instanceof Error ? error.stack : "No stack");
   }
 
   try {
     categories = await apiClient.getCategories();
   } catch (error) {
-    console.error("⚠️ Homepage: Failed to load categories", error);
-    // Continue with empty array
+    console.error("⚠️ Homepage: Failed to load categories");
+    console.error(
+      "Error message:",
+      error instanceof Error ? error.message : String(error),
+    );
+    console.error("Error stack:", error instanceof Error ? error.stack : "No stack");
   }
 
   console.log(
