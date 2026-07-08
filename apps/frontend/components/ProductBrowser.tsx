@@ -25,8 +25,9 @@ export default function ProductBrowser({ initialProducts, categories }: ProductB
   const [selectedCategoryId, setSelectedCategoryId] = useState<string | null>(null);
   const [addingToCart, setAddingToCart] = useState<string | null>(null);
 
+  const shouldFetch = initialProducts.length === 0;
   const { data: products = initialProducts, error, isLoading } = useSWR<Product[]>(
-    '/api/products',
+    shouldFetch ? '/api/products' : null,
     async () => {
       const result = await apiClient.getProducts({ page: 1, limit: 100 });
       return result.products;
