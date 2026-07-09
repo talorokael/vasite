@@ -74,6 +74,7 @@ if (process.env.NODE_ENV === 'production') {
 
 // CORS – support multiple origins (comma-separated FRONTEND_URL)
 const allowedOrigins = process.env.FRONTEND_URL?.split(',').map(o => o.trim()) || [];
+console.log('🔍 Allowed origins:', allowedOrigins);
 app.use(
   cors({
     origin: (origin, callback) => {
