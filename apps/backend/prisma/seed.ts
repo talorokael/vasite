@@ -36,7 +36,13 @@ async function main() {
   console.log(`Created ${categories.length} categories:`, categories.map(c => c.name));
 
   // 3. Ensure admin and test user exist (preserve existing users)
-  const adminPassword = await hash('admin123', 10);
+  const adminPasswordEnv = process.env.ADMIN_PASSWORD;
+  if (!adminPasswordEnv) {
+    console.error('❌ ADMIN_PASSWORD environment variable is required for seeding');
+    process.exit(1);
+  }
+
+  const adminPassword = await hash(adminPasswordEnv, 10);
   const admin = await prisma.user.upsert({
     where: { email: 'admin@verdeafrique.com' },
     update: {},

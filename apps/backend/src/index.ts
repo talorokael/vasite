@@ -72,10 +72,17 @@ if (process.env.NODE_ENV === 'production') {
   logger.warn('⚠️ Rate limiting disabled in development');
 }
 
-// CORS – allow all origins (debugging only)
+// CORS – support multiple origins (comma-separated FRONTEND_URL)
+const allowedOrigins = process.env.FRONTEND_URL?.split(',').map(o => o.trim()) || [];
 app.use(
   cors({
-    origin: true,
+    origin: (origin, callback) => {
+      if (!origin || allowedOrigins.includes(origin)) {
+        callback(null, true);
+      } else {
+        callback(null, false);
+      }
+    },
     credentials: true,
     methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
     allowedHeaders: ['Content-Type', 'Authorization'],
