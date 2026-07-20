@@ -25,7 +25,7 @@ export default async function EdiblePage() {
       <section className="relative py-24 lg:py-32 overflow-hidden">
         <div className="absolute inset-0">
           <Image
-            src="https://placehold.co/1920x800/e8f5f0/004236" // ← REPLACE with your hero image
+            src="/images/edibles/Edibles 2.jpeg"
             alt="Artisanal edibles background"
             fill
             className="object-cover"

@@ -1,8 +1,11 @@
+Updated README.md
+markdown
 # VerdeAfrique – Full-Stack E-Commerce Platform
 
 **Production-ready African botanical e-commerce platform with admin dashboard**  
 **Tech Stack:** Next.js 16 (App Router) + Express 5 + Prisma 7 + PostgreSQL  
-**Deployment:** [Frontend (Vercel)](https://vasite-frontend.vercel.app) | [Backend (Railway)](https://backend-production-dfc8.up.railway.app)
+**Deployment:** [Live Site](https://verdeafrique.co.za) (primary) | [Vercel Preview](https://vasite-frontend.vercel.app) | [Backend API](https://api.verdeafrique.co.za)  
+**Repository:** [github.com/talorokael/vasite](https://github.com/talorokael/vasite.git)
 
 For detailed technical documentation and interview preparation materials, see [INTERVIEW_AUDIT.md](./INTERVIEW_AUDIT.md).
 
@@ -30,7 +33,19 @@ For detailed technical documentation and interview preparation materials, see [I
 - **Per-User Rate Limiting** – Fair allocation: authenticated users (100 req/15min), guests (10 req/15min)
 - **Role-Based Access Control** – Middleware-enforced ADMIN/USER permissions
 - **Webhook Safety** – Paystack signature verification, idempotency checks via unique constraints
+- **CORS Hardening** – Disallowed origins are explicitly rejected with a safe callback-based policy
+- **Deployment Resilience** – Server-side health checks and environment-aware API URL fallback logic for Vercel/Railway debugging
 - **Monorepo Type Safety** – Shared TypeScript types via `packages/shared-types`
+
+---
+
+## 🔧 Recent Updates (July 2026)
+
+- **CORS handling tightened** – The backend now rejects disallowed origins explicitly instead of throwing an error path during preflight validation.
+- **Admin shipment flow hardened** – Order shipment updates now use Prisma-safe tracking updates and safer Courier Guy payload values for nullable user names.
+- **Frontend debugging improvements** – The homepage now performs temporary server-side health checks and uses server/client-specific API URL resolution to help diagnose deployment issues.
+- **Product browser optimization** – The client-side SWR fetch is skipped when server-provided initial products already exist, avoiding unnecessary fetch errors and showing data immediately.
+- **Seed safety** – Seeding now requires an explicit `ADMIN_PASSWORD` environment variable before creating the default admin user.
 
 ---
 
@@ -68,7 +83,7 @@ For detailed technical documentation and interview preparation materials, see [I
 
 ```bash
 # Clone repository
-git clone https://github.com/your-username/verdeafrique.git
+git clone https://github.com/talorokael/vasite.git
 cd verdeafrique
 
 # Install dependencies
@@ -88,39 +103,31 @@ pnpm --filter backend exec dotenv -e .env -- prisma db seed
 
 # Create admin user (interactive prompt)
 pnpm --filter backend exec tsx scripts/setup-admin.ts
-```
-
-### Development Servers
-
-```bash
+Development Servers
+bash
 # Terminal 1 - Backend (Express, port 4000)
 pnpm --filter backend dev
 
 # Terminal 2 - Frontend (Next.js, port 3000)
 pnpm --filter frontend dev
-```
+Visit http://localhost:3000 to access the frontend.
 
-Visit [http://localhost:3000](http://localhost:3000) to access the frontend.
-
----
-
-## 📁 Project Structure
-
-```
+📁 Project Structure
+text
 verdeafrique/
 ├── apps/
 │   ├── backend/
 │   │   ├── src/
-│   │   │   ├── index.ts             # Express app setup, middleware stack
-│   │   │   ├── routes/              # API endpoints (auth, cart, checkout, orders, etc.)
-│   │   │   ├── middleware/          # globalAuth, rate limiting, RBAC
+│   │   │   ├── index.ts             # Express app setup, middleware stack, CORS policy, health endpoint
+│   │   │   ├── routes/              # API endpoints (auth, cart, checkout, orders, admin, etc.)
+│   │   │   ├── middleware/          # globalAuth, rate limiting, RBAC, request IDs
 │   │   │   ├── services/            # Email, SMS, TCG services
-│   │   │   ├── lib/                 # Auth, cache, Prisma client
-│   │   │   ├── webhooks/            # Paystack webhook handler
+│   │   │   ├── lib/                 # Auth, cache, Prisma client, env/logger helpers
+│   │   │   ├── webhooks/            # Paystack and Courier webhook handlers
 │   │   │   └── types/               # Express type extensions
 │   │   ├── prisma/
 │   │   │   ├── schema.prisma        # Database schema (8 tables)
-│   │   │   ├── seed.ts              # Initial seed data
+│   │   │   ├── seed.ts              # Initial seed data (requires ADMIN_PASSWORD)
 │   │   │   └── migrations/          # All incremental migrations
 │   │   └── test/                    # Unit tests
 │   │
@@ -143,124 +150,165 @@ verdeafrique/
 │
 ├── infra/                           # Infrastructure as Code (k8s, terraform)
 └── PROJECT_STRUCTURE.md             # Detailed file structure
-```
+🔑 API Endpoints
+Authentication
+POST /api/auth/register – Create account with email + password
 
----
+POST /api/auth/login – Login and receive session token
 
-## 🔑 API Endpoints
+POST /api/auth/logout – Revoke session
 
-### Authentication
-- `POST /api/auth/register` – Create account with email + password
-- `POST /api/auth/login` – Login and receive session token
-- `POST /api/auth/logout` – Revoke session
-- `GET /api/auth/me` – Get authenticated user info
+GET /api/auth/me – Get authenticated user info
 
-### Products & Categories
-- `GET /api/products` – List products (paginated, filterable)
-- `GET /api/products/:id` – Get product details
-- `POST /api/products` – Create product (admin only)
-- `PUT /api/products/:id` – Update product (admin only)
-- `DELETE /api/products/:id` – Soft delete product (admin only)
-- `GET /api/categories` – List all categories
+Products & Categories
+GET /api/products – List products (paginated, filterable)
 
-### Cart Management
-- `GET /api/cart` – Get user's cart with items
-- `POST /api/cart` – Add item to cart (or update quantity)
-- `PUT /api/cart/:cartItemId` – Update cart item quantity
-- `DELETE /api/cart/:cartItemId` – Remove item from cart
-- `POST /api/cart/merge` – Merge guest cart items (after login)
+GET /api/products/:id – Get product details
 
-### Checkout & Orders
-- `POST /api/checkout/create-session` – Initialize Paystack payment
-- `GET /api/orders` – Get user's orders
-- `GET /api/orders/:id` – Get order details
-- `POST /api/webhooks/paystack` – Paystack webhook (charge.success)
+POST /api/products – Create product (admin only)
 
-### Admin Only
-- `GET /api/admin/orders` – View all orders
-- `PUT /api/admin/orders/:id` – Update order status
-- `GET /api/admin/users` – List all users
-- `PUT /api/admin/users/:id/role` – Change user role
-- `GET /api/stats` – Dashboard statistics (cached)
+PUT /api/products/:id – Update product (admin only)
 
-### Addresses
-- `GET /api/addresses` – List user's addresses
-- `POST /api/addresses` – Create address
-- `PUT /api/addresses/:id` – Update address
-- `DELETE /api/addresses/:id` – Delete address
-- `PUT /api/addresses/:id/default` – Set as default
+DELETE /api/products/:id – Soft delete product (admin only)
 
-### System
-- `GET /api/health` – Health check (includes DB latency)
+GET /api/categories – List all categories
 
----
+Cart Management
+GET /api/cart – Get user's cart with items
 
-## 🔐 Authentication & Session Flow
+POST /api/cart – Add item to cart (or update quantity)
 
-### How It Works
-1. **Registration/Login** → Backend hashes password with bcrypt (12 rounds), creates a database session token, stores in PostgreSQL
-2. **Session Storage** → Backend sets `session_token` in HttpOnly secure cookie (auto-sent by browser)
-3. **Per-Request Auth** → `globalAuth` middleware validates session token against database, attaches `req.user` to all requests
-4. **Logout** → Frontend requests `/api/auth/logout` → Backend deletes session row → immediate invalidation
-5. **Guest Cart Merge** → On login, frontend sends localStorage guest cart → backend atomically merges using Prisma `$transaction` + `upsert`
+PUT /api/cart/:cartItemId – Update cart item quantity
 
-### Why Database Sessions?
-- ✅ **Revocable** – Delete session row = instant logout (JWT can't do this)
-- ✅ **Stateful** – Can store metadata, track login history
-- ✅ **Secure** – HttpOnly cookie prevents XSS token theft
-- ✅ **Audit Trail** – All sessions logged in database
+DELETE /api/cart/:cartItemId – Remove item from cart
 
----
+POST /api/cart/merge – Merge guest cart items (after login)
 
-## 💳 Payment Flow (Paystack)
+Checkout & Orders
+POST /api/checkout/create-session – Initialize Paystack payment
 
-1. User selects address and clicks "Pay"
-2. Frontend calls `POST /api/checkout/create-session`
-3. Backend validates address ownership, calculates total, initializes Paystack transaction
-4. Paystack redirects to payment page
-5. User enters card details → Paystack charges
-6. Paystack sends `charge.success` webhook to backend
-7. Backend verifies signature, checks for duplicates (idempotency via `stripeSessionId`), creates order
-8. Backend clears cart, sends confirmation emails to customer + admin
-9. Frontend redirects to `/order/success?reference=...`
-10. User can view order in account → order history
+GET /api/orders – Get user's orders
 
-**Safety Features:**
-- HMAC-SHA512 signature verification
-- Idempotency check (unique `stripeSessionId` constraint)
-- Server-side verification of amount before creating order
-- Transaction rollback on error
+GET /api/orders/:id – Get order details
 
----
+POST /api/webhooks/paystack – Paystack webhook (charge.success)
 
-## 🗄️ Database Schema
+Admin Only
+GET /api/admin/orders – View all orders
 
-### Core Tables
-- **User** – Email, password hash, role (ADMIN/USER), metadata
-- **Session** – Token, user ID, expiry time (revocable)
-- **Product** – Name, price, images, category, soft-delete flag
-- **Category** – Category name (Flowers, Edibles, Cosmetics, Apothecary, TCG)
-- **Cart** – One per user, contains CartItems
-- **CartItem** – Product ID + quantity (unique per cart)
-- **Order** – Total, status, Paystack reference (idempotency key), user + address
-- **OrderItem** – Product snapshot + quantity per order
-- **Address** – User addresses (street, city, country, postal code, phone)
+PUT /api/admin/orders/:id – Update order status
 
-### Key Relationships
-- User → Sessions (one-to-many, revocable)
-- User → Cart (one-to-one)
-- Cart → CartItems (one-to-many)
-- CartItem → Product (many-to-one)
-- User → Orders (one-to-many)
-- Order → OrderItems (one-to-many, product snapshot)
-- Order → Address (many-to-one)
-- Product → Category (many-to-one)
+GET /api/admin/users – List all users
 
----
+PUT /api/admin/users/:id/role – Change user role
 
-## 🧪 Testing
+GET /api/stats – Dashboard statistics (cached)
 
-```bash
+Addresses
+GET /api/addresses – List user's addresses
+
+POST /api/addresses – Create address
+
+PUT /api/addresses/:id – Update address
+
+DELETE /api/addresses/:id – Delete address
+
+PUT /api/addresses/:id/default – Set as default
+
+System
+GET /api/health – Health check (includes DB latency)
+
+🔐 Authentication & Session Flow
+How It Works
+Registration/Login → Backend hashes password with bcrypt (12 rounds), creates a database session token, stores in PostgreSQL
+
+Session Storage → Backend sets session_token in HttpOnly secure cookie (auto-sent by browser)
+
+Per-Request Auth → globalAuth middleware validates session token against database, attaches req.user to all requests
+
+Logout → Frontend requests /api/auth/logout → Backend deletes session row → immediate invalidation
+
+Guest Cart Merge → On login, frontend sends localStorage guest cart → backend atomically merges using Prisma $transaction + upsert
+
+Why Database Sessions?
+✅ Revocable – Delete session row = instant logout (JWT can't do this)
+
+✅ Stateful – Can store metadata, track login history
+
+✅ Secure – HttpOnly cookie prevents XSS token theft
+
+✅ Audit Trail – All sessions logged in database
+
+💳 Payment Flow (Paystack)
+User selects address and clicks "Pay"
+
+Frontend calls POST /api/checkout/create-session
+
+Backend validates address ownership, calculates total, initializes Paystack transaction
+
+Paystack redirects to payment page
+
+User enters card details → Paystack charges
+
+Paystack sends charge.success webhook to backend
+
+Backend verifies signature, checks for duplicates (idempotency via stripeSessionId), creates order
+
+Backend clears cart, sends confirmation emails to customer + admin
+
+Frontend redirects to /order/success?reference=...
+
+User can view order in account → order history
+
+Safety Features:
+
+HMAC-SHA512 signature verification
+
+Idempotency check (unique stripeSessionId constraint)
+
+Server-side verification of amount before creating order
+
+Transaction rollback on error
+
+🗄️ Database Schema
+Core Tables
+User – Email, password hash, role (ADMIN/USER), metadata
+
+Session – Token, user ID, expiry time (revocable)
+
+Product – Name, price, images, category, soft-delete flag
+
+Category – Category name (Flowers, Edibles, Cosmetics, Apothecary, TCG)
+
+Cart – One per user, contains CartItems
+
+CartItem – Product ID + quantity (unique per cart)
+
+Order – Total, status, Paystack reference (idempotency key), user + address
+
+OrderItem – Product snapshot + quantity per order
+
+Address – User addresses (street, city, country, postal code, phone)
+
+Key Relationships
+User → Sessions (one-to-many, revocable)
+
+User → Cart (one-to-one)
+
+Cart → CartItems (one-to-many)
+
+CartItem → Product (many-to-one)
+
+User → Orders (one-to-many)
+
+Order → OrderItems (one-to-many, product snapshot)
+
+Order → Address (many-to-one)
+
+Product → Category (many-to-one)
+
+🧪 Testing
+bash
 # Run backend unit tests (Vitest)
 pnpm --filter backend test
 
@@ -275,21 +323,16 @@ pnpm lint
 
 # Type check all workspaces
 pnpm typecheck
-```
-
----
-
-## 📊 Environment Variables
-
-### Backend (`.env`)
-```env
+📊 Environment Variables
+Backend (.env)
+env
 # Database
 DATABASE_URL=postgresql://user:password@localhost:5432/verdeafrique
 
 # Server
 PORT=4000
 NODE_ENV=production
-FRONTEND_URL=http://localhost:3000
+FRONTEND_URL=https://verdeafrique.co.za
 
 # Authentication
 COOKIE_SECRET=your-secret-key-here
@@ -306,107 +349,128 @@ ADMIN_EMAIL=admin@example.com
 # Optional
 STRIPE_SECRET_KEY=sk_test_...  # Unused
 LOG_LEVEL=debug
-```
+Frontend (.env.local)
+env
+NEXT_PUBLIC_API_URL=https://api.verdeafrique.co.za
+🚀 Deployment
+Frontend (Vercel)
+Connect GitHub repo to Vercel
 
-### Frontend (`.env.local`)
-```env
-NEXT_PUBLIC_API_URL=http://localhost:4000
-```
+Set root directory: (leave as default, Vercel auto-detects monorepo)
 
----
+Set build command: pnpm build --filter frontend
 
-## 🚀 Deployment
+Set start command: (Vercel auto-detects Next.js)
 
-### Frontend (Vercel)
-1. Connect GitHub repo to Vercel
-2. Set root directory: (leave as default, Vercel auto-detects monorepo)
-3. Set build command: `pnpm build --filter frontend`
-4. Set start command: (Vercel auto-detects Next.js)
-5. Add environment variable: `NEXT_PUBLIC_API_URL=https://backend-production-dfc8.up.railway.app`
-6. Deploy!
+Add environment variable: NEXT_PUBLIC_API_URL=https://api.verdeafrique.co.za
 
-### Backend (Railway)
-1. Connect GitHub repo to Railway
-2. Create PostgreSQL service (Railway managed)
-3. Create Node.js service for backend
-4. Set environment variables:
-   - `DATABASE_URL=...` (from Railway PostgreSQL)
-   - `FRONTEND_URL=https://vasite-frontend.vercel.app`
-   - `NODE_ENV=production`
-   - `PAYSTACK_SECRET_KEY=...`
-   - `BREVO_API_KEY=...`
-   - etc.
-5. Set build command: `cd apps/backend && pnpm install && pnpm build`
-6. Set start command: `node dist/index.js`
-7. Deploy!
+Deploy!
 
-### DNS Configuration
-- Frontend domain → Vercel CNAME
-- Backend domain → Railway-generated URL (or custom CNAME)
+Backend (Railway)
+Connect GitHub repo to Railway
 
----
+Create PostgreSQL service (Railway managed)
 
-## 📈 Performance & Caching
+Create Node.js service for backend
 
-- **Product List Cache** – 15-minute TTL, cleared on create/update/delete
-- **Dashboard Stats Cache** – 5-minute TTL, cleared on product changes
-- **Image Optimization** – Next.js `Image` component with automatic sizing
-- **Database Indexes** – Added on frequently queried fields (userId, productId, cartId)
-- **Rate Limiting** – Per-user (100/15min auth, 10/15min guest) + IPv6 /56 masking
+Set environment variables:
 
----
+DATABASE_URL=... (from Railway PostgreSQL)
 
-## 🎓 Key Architectural Decisions
+FRONTEND_URL=https://verdeafrique.co.za
 
-### Why Database Sessions Over JWT?
-- Sessions are revocable (logout is instant, not delayed by token TTL)
-- Can track login history and metadata
-- Smaller payload than JWT (just a token string)
-- HttpOnly cookies prevent XSS token theft
+NODE_ENV=production
 
-### Why Per-User Rate Limiting?
-- Fair resource allocation (authenticated users get more quota)
-- IPv6 /56 masking prevents single-user botnets
-- User ID lookup is fast with globalAuth middleware
+PAYSTACK_SECRET_KEY=...
 
-### Why Prisma Over Raw SQL?
-- Type-safe queries with auto-generated client
-- Migration management (no manual SQL)
-- Atomic transactions for complex operations (cart merge)
-- Better performance with connection pooling
+BREVO_API_KEY=...
 
-### Why Next.js App Router?
-- Server Components by default (better performance)
-- File-based routing
-- Built-in image optimization
-- Seamless API route integration
+etc.
 
----
+Set build command: cd apps/backend && pnpm install && pnpm build
 
-## 🔄 Recent Improvements (May 2026)
+Set start command: node dist/index.js
 
-✅ **Guest Cart Merge** – Atomic Prisma transaction preserves guest cart on login  
-✅ **Per-User Rate Limiting** – Fair resource allocation with IPv6 safety  
-✅ **Global Auth Middleware** – Attaches user to all requests for middleware access  
-✅ **Health Check Endpoint** – Verifies DB connection + latency measurement  
-✅ **Environment Validation** – Enforced at startup via dotenv  
+Deploy!
 
----
+DNS Configuration
+Frontend domain → Vercel CNAME
 
-## 📚 Further Reading
+Backend domain → Railway-generated URL (or custom CNAME)
 
-- [INTERVIEW_AUDIT.md](./INTERVIEW_AUDIT.md) – Comprehensive technical documentation, STAR stories, 20 interview Q&A
-- [PROJECT_STRUCTURE.md](./PROJECT_STRUCTURE.md) – Detailed file-by-file breakdown
-- [DESIGN.md](./DESIGN.md) – UI/UX design decisions
+📈 Performance & Caching
+Product List Cache – 15-minute TTL, cleared on create/update/delete
 
----
+Dashboard Stats Cache – 5-minute TTL, cleared on product changes
 
-## 📧 Support & Questions
+Image Optimization – Next.js Image component with automatic sizing
 
-For technical details, deployment issues, or interview preparation, refer to [INTERVIEW_AUDIT.md](./INTERVIEW_AUDIT.md).
+Database Indexes – Added on frequently queried fields (userId, productId, cartId)
 
----
+Rate Limiting – Per-user (100/15min auth, 10/15min guest) + IPv6 /56 masking
 
-**Last Updated:** June 2026  
-**Status:** Production Ready  
-**License:** MIT
+🎓 Key Architectural Decisions
+Why Database Sessions Over JWT?
+Sessions are revocable (logout is instant, not delayed by token TTL)
+
+Can track login history and metadata
+
+Smaller payload than JWT (just a token string)
+
+HttpOnly cookies prevent XSS token theft
+
+Why Per-User Rate Limiting?
+Fair resource allocation (authenticated users get more quota)
+
+IPv6 /56 masking prevents single-user botnets
+
+User ID lookup is fast with globalAuth middleware
+
+Why Prisma Over Raw SQL?
+Type-safe queries with auto-generated client
+
+Migration management (no manual SQL)
+
+Atomic transactions for complex operations (cart merge)
+
+Better performance with connection pooling
+
+Why Next.js App Router?
+Server Components by default (better performance)
+
+File-based routing
+
+Built-in image optimization
+
+Seamless API route integration
+
+🔄 Recent Improvements (May 2026)
+✅ Guest Cart Merge – Atomic Prisma transaction preserves guest cart on login
+✅ Per-User Rate Limiting – Fair resource allocation with IPv6 safety
+✅ Global Auth Middleware – Attaches user to all requests for middleware access
+✅ Health Check Endpoint – Verifies DB connection + latency measurement
+✅ Environment Validation – Enforced at startup via dotenv
+
+� Upcoming Features
+The Courier Guy Shipping Integration
+Automated shipping label generation and order tracking
+
+Real-time courier status updates via webhooks
+
+Customer tracking page with live shipment status
+
+Admin dashboard to manage shipments and print labels
+
+�📚 Further Reading
+INTERVIEW_AUDIT.md – Comprehensive technical documentation, STAR stories, 20 interview Q&A
+
+PROJECT_STRUCTURE.md – Detailed file-by-file breakdown
+
+DESIGN.md – UI/UX design decisions
+
+📧 Support & Questions
+For technical details, deployment issues, or interview preparation, refer to INTERVIEW_AUDIT.md.
+
+Last Updated: June 2026
+Status: Production Ready
+License: MIT

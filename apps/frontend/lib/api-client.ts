@@ -29,6 +29,8 @@ export interface AdminOrder extends Order {
   };
 }
 
+console.log('🔍 NEXT_PUBLIC_API_URL =', process.env.NEXT_PUBLIC_API_URL);
+
 const API_BASE_URL =
   typeof window === "undefined"
     ? process.env.NEXT_PUBLIC_API_URL_SERVER ||
@@ -64,6 +66,7 @@ export class ApiClient {
       ...options,
       credentials: "include",
       headers,
+      cache: 'no-store',
     });
 
     // Handle 204 No Content

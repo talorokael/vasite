@@ -36,7 +36,7 @@ export default async function CosmeticsPage() {
       <section className="relative py-24 lg:py-32 overflow-hidden">
         <div className="absolute inset-0">
           <Image
-            src="https://placehold.co/1920x800/e8f5f0/004236" // ← REPLACE with your hero image
+            src="/images/cosmetics/cosmetics.jpg"
             alt="African natural cosmetics beauty background"
             fill
             className="object-cover"

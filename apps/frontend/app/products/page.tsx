@@ -28,6 +28,7 @@ export default async function ProductsPage({
   try {
     const response = await apiClient.getProducts({ page: 1, limit: 100 });
     products = response.products;
+    console.log('📦 /products page – fetched products count:', products.length);
   } catch (error) {
     console.error('Failed to load products:', error);
   }

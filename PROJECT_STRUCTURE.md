@@ -1,3 +1,5 @@
+**PROJECT_STRUCTURE.md**
+```markdown
 VerdeAfrique/
 ├── package.json                     # monorepo scripts (pnpm -w run ...)
 ├── pnpm-workspace.yaml              # workspaces: apps/*, packages/*
@@ -20,12 +22,12 @@ VerdeAfrique/
 │   │   ├── tsconfig.json
 │   │   ├── prisma/
 │   │   │   ├── schema.prisma        # models: User, Session, Product, Category, Cart, CartItem, Order, OrderItem
-│   │   │   ├── seed.ts              # seeds initial categories, products, admin user
+│   │   │   ├── seed.ts              # seeds initial categories, products, admin user (requires ADMIN_PASSWORD)
 │   │   │   └── migrations/          # all migration folders with SQL files
 │   │   ├── scripts/
 │   │   │   └── setup-admin.ts       # interactive admin account creator
 │   │   └── src/
-│   │       ├── index.ts             # Express app, globalAuth, rate limiting, routes, error handler
+│   │       ├── index.ts             # Express app, globalAuth, rate limiting, CORS policy, webhook routes, health endpoint
 │   │       ├── lib/
 │   │       │   ├── auth.ts          # session creation/validation, password hashing (bcrypt 12 rounds)
 │   │       │   ├── cache.ts         # TTL cache with getCached() and clearCache(keyPattern?)
@@ -54,8 +56,9 @@ VerdeAfrique/
 │   │       ├── services/
 │   │       │   ├── email.service.ts # Brevo transactional email (customer + admin notifications)
 │   │       │   ├── sms.service.ts   # SMS notification service (optional)
-│   │       │   └── tcg.service.ts   # Trading card game related service
+│   │       │   └── tcg.service.ts   # Courier Guy API client (planned)
 │   │       ├── webhooks/
+│   │       │   ├── courier.ts       # Courier Guy webhook handler (planned)
 │   │       │   └── paystack.ts      # handles charge.success, signature verification, idempotency check, order creation, cart clearance, notifications
 │   │       └── types/
 │   │           └── express.d.ts     # extends Request with `user` property
@@ -73,7 +76,7 @@ VerdeAfrique/
 │       ├── app/
 │       │   ├── globals.css          # Tailwind imports
 │       │   ├── layout.tsx           # root layout, AuthProvider, CartProvider
-│       │   ├── page.tsx             # homepage (server component)
+│       │   ├── page.tsx             # homepage (server component with server-side health probe and API fallback URL handling)
 │       │   ├── account/
 │       │   │   └── orders/          # user order history and details
 │       │   ├── admin/
@@ -100,7 +103,7 @@ VerdeAfrique/
 │       │   ├── CategoryFilter.tsx
 │       │   ├── HomePageClient.tsx
 │       │   ├── LoginForm.tsx
-│       │   ├── ProductBrowser.tsx   # client component for product listing
+│       │   ├── ProductBrowser.tsx   # client component for product listing (skips SWR fetch when initial products are already available)
 │       │   ├── ProductCard.tsx      # Add to Cart button (uses CartContext)
 │       │   ├── RegisterForm.tsx
 │       │   └── Layout/
@@ -150,18 +153,20 @@ Recent Fixes & MP10 Additions (May 2026)
 - `CartContext` modified to store guest cart items in `localStorage` when user is not logged in (replaces alert popup).
 - Manual cache invalidation: `clearCache(keyPattern?)` in `cache.ts`; called after product create/update/delete to clear `dashboard-stats` and product list caches.
 
-**Deployment URLs (unchanged)**
-- Frontend: https://vasite-frontend.vercel.app
-- Backend: https://backend-production-dfc8.up.railway.app
+**Deployment URLs**
+- Frontend (primary): https://verdeafrique.co.za
+- Backend API: https://api.verdeafrique.co.za
+- Vercel preview (secondary): https://vasite-frontend.vercel.app
+- Railway origin (secondary): https://backend-production-dfc8.up.railway.app
 
 **Environment Variables (updated)**
 Backend (Railway):
-- `DATABASE_URL`, `FRONTEND_URL`, `COOKIE_SECRET`, `SESSION_SECURE_COOKIE=true`
+- `DATABASE_URL`, `FRONTEND_URL=https://verdeafrique.co.za`, `COOKIE_SECRET`, `SESSION_SECURE_COOKIE=true`
 - `PAYSTACK_SECRET_KEY`, `PAYSTACK_WEBHOOK_SECRET` (optional)
 - `NODE_ENV=production` (enables rate limiting)
 
 Frontend (Vercel):
-- `NEXT_PUBLIC_API_URL=https://backend-production-dfc8.up.railway.app`
+- `NEXT_PUBLIC_API_URL=https://api.verdeafrique.co.za`
 
 **Security & Architectural Notes**
 - The `session_token` cookie is HttpOnly, secure, and SameSite=none in production (for cross‑origin requests).

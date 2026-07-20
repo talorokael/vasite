@@ -1,6 +1,7 @@
 // apps/frontend/components/Layout/Navbar.tsx
 'use client';
 
+import Image from 'next/image';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import { ShoppingCart, User, Menu, X } from 'lucide-react';
@@ -40,11 +41,18 @@ export default function Navbar() {
         </button>
 
         {/* Logo */}
-        <Link 
-          href="/" 
-          className="text-2xl font-bold text-primary hover:opacity-80 transition-opacity"
+        <Link
+          href="/"
+          className="flex items-center gap-2"
         >
-          VerdeAfrique
+          <Image
+            src="/va-logo.jpg"
+            alt="VerdeAfrique Botanicals"
+            width={180}
+            height={50}
+            className="h-10 w-auto"
+            priority
+          />
         </Link>
 
         {/* Icons */}
