@@ -13,6 +13,7 @@ import toast from 'react-hot-toast';
 import SkeletonProductGrid from './SkeletonProductGrid';
 import EmptyState from './EmptyState';
 import { ShoppingCart, Eye, Loader2 } from 'lucide-react';
+import { formatPrice } from '@/lib/formatPrice';
 
 interface ProductBrowserProps {
   initialProducts: Product[];
@@ -139,7 +140,7 @@ export default function ProductBrowser({ initialProducts, categories }: ProductB
 
               <div className="flex items-center justify-between gap-2 mb-4">
                 <span className="font-bold text-primary text-lg">
-                  ${(product.price / 100).toFixed(2)}
+                  {formatPrice(product.price)}
                 </span>
                 {product.categoryName && (
                   <span className="text-xs bg-secondary text-secondary-foreground px-2 py-1 rounded-full">

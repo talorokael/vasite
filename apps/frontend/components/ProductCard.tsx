@@ -5,6 +5,7 @@ import Image from 'next/image';
 import { useCart } from '@/lib/CartContext';
 import { ShoppingCart, Loader2 } from 'lucide-react';
 import { useState } from 'react';
+import { formatPrice } from '@/lib/formatPrice';
 
 interface ProductCardProps {
   product: {
@@ -21,6 +22,8 @@ interface ProductCardProps {
 export default function ProductCard({ product }: ProductCardProps) {
   const { addToCart } = useCart();
   const [isAdding, setIsAdding] = useState(false);
+
+  console.log('ProductCard price:', product.price, typeof product.price);
 
   const handleAddToCart = async () => {
     setIsAdding(true);
@@ -62,7 +65,7 @@ export default function ProductCard({ product }: ProductCardProps) {
             )}
           </div>
           <p className="text-primary font-bold text-lg whitespace-nowrap">
-            ${(product.price / 100).toFixed(2)}
+            {formatPrice(product.price)}
           </p>
         </div>
 
