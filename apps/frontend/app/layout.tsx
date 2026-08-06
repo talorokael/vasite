@@ -4,11 +4,23 @@ import { AuthProvider } from '../lib/AuthContext';
 import { CartProvider } from '@/lib/CartContext';
 import ToastProvider from '../components/ToastProvider';
 import Navbar from '@/components/Layout/Navbar';
-import { Inter } from 'next/font/google';
+import { Inter, Libertinus_Serif, Lato } from 'next/font/google';
 import Link from 'next/link';
 const inter = Inter({ 
   subsets: ['latin'],
   variable: '--font-inter',
+});
+const libertinus = Libertinus_Serif({
+  subsets: ['latin'],
+  weight: ['400', '600', '700'],
+  display: 'swap',
+  variable: '--font-libertinus',
+});
+const lato = Lato({
+  subsets: ['latin'],
+  weight: ['400', '700'],
+  display: 'swap',
+  variable: '--font-lato',
 });
 
 export const metadata: Metadata = {
@@ -39,7 +51,7 @@ export default function RootLayout({
   children: React.ReactNode;
 }) {
   return (
-    <html lang="en" className={`${inter.variable} bg-background`}>
+    <html lang="en" className={`${inter.variable} ${libertinus.variable} ${lato.variable} bg-background`}>
       <body className="font-sans antialiased">
         <AuthProvider>
           <CartProvider>

@@ -8,7 +8,13 @@ module.exports = {
     "./components/**/*.{js,ts,jsx,tsx,mdx}",
   ],
   theme: {
-    extend: {},
+    extend: {
+      fontFamily: {
+        serif: ['var(--font-libertinus)', 'serif'],
+        libertinus: ['var(--font-libertinus)', 'serif'],
+        lato: ['var(--font-lato)', 'sans-serif'],
+      },
+    },
   },
   plugins: [],
 }

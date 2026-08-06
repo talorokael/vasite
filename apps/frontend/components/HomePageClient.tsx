@@ -1,5 +1,6 @@
 'use client';
 
+import Image from 'next/image';
 import Link from 'next/link';
 import ProductBrowser from './ProductBrowser';
 import { Product, Category } from 'shared-types';
@@ -17,36 +18,47 @@ export default function HomePageClient({ products, categories }: HomePageClientP
   return (
     <main>
       {/* Hero Section */}
-      <section className="relative bg-primary text-primary-foreground py-20 lg:py-32">
-        <div className="container mx-auto px-4">
-          <div className="max-w-3xl mx-auto text-center">
-            <h1 className="text-4xl lg:text-6xl font-bold mb-6 text-balance">
-              Naturally African, Globally Loved
+      <section className="relative bg-primary text-primary-foreground py-20 lg:py-32 overflow-hidden min-h-[500px] flex items-center">
+        {/* Full-cover background image */}
+        <div className="absolute inset-0">
+          <Image
+            src="/images/Apothecary.jpg"
+            alt="African botanicals hero"
+            fill
+            className="object-cover"
+            priority
+          />
+          {/* Soft overlay for readability */}
+          <div className="absolute inset-0 bg-black/40" />
+        </div>
+
+        {/* Content – left aligned, soft, minimal */}
+        <div className="container mx-auto px-4 relative z-10">
+          <div className="max-w-2xl text-left">
+            <h1 className="text-3xl md:text-4xl lg:text-5xl font-bold text-white/90 mb-4 leading-tight">
+              Naturally African,<br />Globally Loved
             </h1>
-            <p className="text-lg lg:text-xl mb-8 opacity-90 text-pretty">
-              Discover premium skincare, body, and beauty products inspired by African botanicals. 
+            <p className="text-base md:text-lg text-white/70 max-w-xl mb-6 leading-relaxed">
+              Premium skincare, body, and beauty products inspired by African botanicals.
               Pure ingredients, sustainable sourcing, transformative results.
             </p>
-            <div className="flex flex-col sm:flex-row gap-4 justify-center">
+            <div className="flex flex-wrap gap-4">
               <Link
                 href="/products"
-                className="inline-flex items-center justify-center gap-2 bg-card text-primary px-8 py-3 rounded-md font-semibold hover:bg-opacity-90 transition-all focus-visible:ring-2 focus-visible:ring-card"
+                className="inline-flex items-center gap-2 bg-white/10 backdrop-blur-sm border border-white/20 text-white px-6 py-2.5 rounded-md font-medium hover:bg-white/20 transition-all"
               >
                 Shop Now
-                <ArrowRight className="w-5 h-5" />
+                <ArrowRight className="w-4 h-4" />
               </Link>
               <Link
                 href="/about"
-                className="inline-flex items-center justify-center gap-2 border-2 border-primary-foreground px-8 py-3 rounded-md font-semibold hover:bg-primary-foreground hover:text-primary transition-all"
+                className="inline-flex items-center gap-2 border border-white/30 text-white/80 px-6 py-2.5 rounded-md font-medium hover:bg-white/10 transition-all"
               >
                 Our Story
               </Link>
             </div>
           </div>
         </div>
-        
-        {/* Decorative gradient */}
-        <div className="absolute inset-0 bg-gradient-to-b from-transparent to-background/10 pointer-events-none" />
       </section>
 
       {/* Value Props */}

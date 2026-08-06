@@ -50,7 +50,7 @@ export default function Navbar() {
             alt="VerdeAfrique Botanicals"
             width={180}
             height={50}
-            className="h-10 w-auto"
+            className="h-25 w-auto"
             priority
           />
         </Link>
@@ -91,16 +91,16 @@ export default function Navbar() {
                 (link.href.includes('?') && pathname.includes(link.href.split('?')[0]));
               return (
                 <li key={link.name}>
-                  <Link
-                    href={link.href}
-                    className={`py-2 transition-colors hover:text-primary ${
-                      isActive
-                        ? 'text-primary border-b-2 border-primary'
-                        : 'text-muted-foreground'
-                    }`}
-                  >
-                    {link.name}
-                  </Link>
+                    <Link
+                      href={link.href}
+                      className={`py-2 font-lato transition-colors hover:text-primary ${
+                        isActive
+                          ? 'text-primary border-b-2 border-primary'
+                          : 'text-muted-foreground'
+                      }`}
+                    >
+                      {link.name}
+                    </Link>
                 </li>
               );
             })}
@@ -108,7 +108,7 @@ export default function Navbar() {
               <li>
                 <Link
                   href="/admin"
-                  className={`py-2 transition-colors hover:text-primary ${pathname.startsWith('/admin') ? 'text-primary border-b-2 border-primary' : 'text-muted-foreground'}`}
+                  className={`py-2 font-lato transition-colors hover:text-primary ${pathname.startsWith('/admin') ? 'text-primary border-b-2 border-primary' : 'text-muted-foreground'}`}
                 >
                   Admin
                 </Link>
@@ -129,7 +129,7 @@ export default function Navbar() {
                   <Link
                     href={link.href}
                     onClick={() => setMobileMenuOpen(false)}
-                    className={`block px-4 py-3 transition-colors hover:bg-muted ${
+                    className={`block px-4 py-3 font-lato transition-colors hover:bg-muted ${
                       isActive
                         ? 'text-primary bg-secondary'
                         : 'text-muted-foreground'
