@@ -154,6 +154,39 @@ router.get("/", async (req: Request, res: Response) => {
   }
 });
 
+// GET /api/products/:id
+router.get("/:id", async (req: Request, res: Response) => {
+  try {
+    const { id } = req.params;
+    if (!id) {
+      return res.status(400).json({ error: "Product ID is required" });
+    }
+
+    const product = await prisma.product.findUnique({
+      where: { id: id as string },
+      include: {
+        category: {
+          select: { id: true, name: true },
+        },
+      },
+    });
+
+    if (!product) {
+      return res.status(404).json({ error: "Product not found" });
+    }
+
+    const productWithCategory = {
+      ...product,
+      categoryName: product.category?.name || null,
+    };
+
+    res.json(productWithCategory);
+  } catch (error) {
+    console.error("Error fetching product:", error);
+    res.status(500).json({ error: "Failed to fetch product" });
+  }
+});
+
 // POST /api/products
 router.post("/", authenticate, requireRole(["ADMIN"]), async (req, res) => {
   try {

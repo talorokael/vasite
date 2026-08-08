@@ -6,6 +6,15 @@ datasource db {
   provider = "postgresql"
 }
 
+model ExpoLead {
+  id        String   @id @default(cuid())
+  name      String
+  email     String
+  phone     String?
+  interest  String   // e.g., "Products", "Bulk", "Partnership", "Other"
+  createdAt DateTime @default(now())
+}
+
 model User {
   id           String    @id @default(cuid())
   email        String    @unique

@@ -33,9 +33,8 @@ console.log('🔍 NEXT_PUBLIC_API_URL =', process.env.NEXT_PUBLIC_API_URL);
 
 const API_BASE_URL =
   typeof window === "undefined"
-    ? process.env.NEXT_PUBLIC_API_URL_SERVER ||
-      "https://backend-production-dfc8.up.railway.app"
-    : process.env.NEXT_PUBLIC_API_URL || "https://api.verdeafrique.co.za";
+    ? process.env.NEXT_PUBLIC_API_URL_SERVER || "http://localhost:3001"
+    : process.env.NEXT_PUBLIC_API_URL || "http://localhost:3001";
 
 export class ApiClient {
   private token: string | null = null; // 👈 add private token storage
@@ -157,6 +156,18 @@ export class ApiClient {
 
   async getCategories(): Promise<Category[]> {
     return this.request<Category[]>("/api/categories");
+  }
+
+  async submitExpoLead(data: {
+    name: string;
+    email: string;
+    phone?: string;
+    interest: string;
+  }): Promise<{ success: boolean }> {
+    return this.request<{ success: boolean }>("/api/expo/leads", {
+      method: 'POST',
+      body: JSON.stringify(data),
+    });
   }
 
   async register(

@@ -7,6 +7,7 @@ import Link from 'next/link';
 import useSWR from 'swr';
 import { apiClient } from '@/lib/api-client';
 import { useAuth } from '@/lib/AuthContext';
+import { formatPrice } from '@/lib/formatPrice';
 import ImageWithFallback from '@/components/ImageWithFallback';
 import SkeletonTable from '@/components/SkeletonTable';
 import EmptyState from '@/components/EmptyState';
@@ -204,7 +205,7 @@ export default function ProductsTable() {
                   </td>
                   <td className="px-6 py-4">
                     <span className="font-medium text-foreground">
-                      ${(product.price / 100).toFixed(2)}
+                      {formatPrice(product.price)}
                     </span>
                   </td>
                   <td className="px-6 py-4">
