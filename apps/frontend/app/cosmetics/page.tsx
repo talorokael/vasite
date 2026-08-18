@@ -72,7 +72,7 @@ export default async function CosmeticsPage() {
             <div className="text-center">
               <div className="relative w-32 h-32 mx-auto mb-4 rounded-full overflow-hidden">
                 <Image
-                  src="https://placehold.co/300x300/e8f5f0/004236" // ← REPLACE with cleanse image
+                  src="/images/cosmetics/cleanse.jpg"
                   alt="Cleanse"
                   fill
                   className="object-cover"
@@ -84,7 +84,7 @@ export default async function CosmeticsPage() {
             <div className="text-center">
               <div className="relative w-32 h-32 mx-auto mb-4 rounded-full overflow-hidden">
                 <Image
-                  src="https://placehold.co/300x300/e8f5f0/004236" // ← REPLACE with tone image
+                  src="/images/cosmetics/tone.jpg"
                   alt="Tone & Hydrate"
                   fill
                   className="object-cover"
@@ -96,7 +96,7 @@ export default async function CosmeticsPage() {
             <div className="text-center">
               <div className="relative w-32 h-32 mx-auto mb-4 rounded-full overflow-hidden">
                 <Image
-                  src="https://placehold.co/300x300/e8f5f0/004236" // ← REPLACE with protect & glow image
+                  src="/images/cosmetics/glow.jpg"
                   alt="Protect & Glow"
                   fill
                   className="object-cover"

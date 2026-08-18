@@ -57,7 +57,7 @@ export default async function EdiblePage() {
           <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
             <div className="relative h-96 rounded-xl overflow-hidden">
               <Image
-                src="https://placehold.co/800x1000/e8f5f0/004236" // ← REPLACE with gummies image
+                src="/images/edibles/gum.jpg"
                 alt="Gummies"
                 fill
                 className="object-cover"
@@ -65,7 +65,7 @@ export default async function EdiblePage() {
             </div>
             <div className="relative h-96 rounded-xl overflow-hidden">
               <Image
-                src="https://placehold.co/800x1000/e8f5f0/004236" // ← REPLACE with chocolates image
+                src="/images/edibles/choc.jpg"
                 alt="Chocolates"
                 fill
                 className="object-cover"
@@ -73,7 +73,7 @@ export default async function EdiblePage() {
             </div>
             <div className="relative h-96 rounded-xl overflow-hidden">
               <Image
-                src="https://placehold.co/800x1000/e8f5f0/004236" // ← REPLACE with baked goods image
+                src="/images/edibles/Baked.jpg"
                 alt="Baked Goods"
                 fill
                 className="object-cover"

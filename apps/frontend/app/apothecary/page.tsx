@@ -58,7 +58,7 @@ export default async function ApothecaryPage() {
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-12 items-center">
             <div className="relative h-96 rounded-xl overflow-hidden">
               <Image
-                src="https://placehold.co/800x1000/e8f5f0/004236" // ← REPLACE with mortar & pestle image
+                src="/images/apothecary/Herbal prep.jpg"
                 alt="Herbal preparation with mortar and pestle"
                 fill
                 className="object-cover"

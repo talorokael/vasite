@@ -60,7 +60,7 @@ export default async function FlowerPage() {
           <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
             <div className="relative h-80 rounded-xl overflow-hidden group">
               <Image
-                src="https://placehold.co/600x800/e8f5f0/004236" // ← REPLACE with Sativa image
+                src="/images/flower/sativa.jpg"
                 alt="Sativa strain"
                 fill
                 className="object-cover transition-transform group-hover:scale-105"
@@ -71,7 +71,7 @@ export default async function FlowerPage() {
             </div>
             <div className="relative h-80 rounded-xl overflow-hidden group">
               <Image
-                src="https://placehold.co/600x800/e8f5f0/004236" // ← REPLACE with Indica image
+                src="/images/flower/indica.jpg"
                 alt="Indica strain"
                 fill
                 className="object-cover transition-transform group-hover:scale-105"
@@ -82,7 +82,7 @@ export default async function FlowerPage() {
             </div>
             <div className="relative h-80 rounded-xl overflow-hidden group">
               <Image
-                src="https://placehold.co/600x800/e8f5f0/004236" // ← REPLACE with Hybrid image
+                src="/images/flower/hybrid-img1.jpg"
                 alt="Hybrid strain"
                 fill
                 className="object-cover transition-transform group-hover:scale-105"
