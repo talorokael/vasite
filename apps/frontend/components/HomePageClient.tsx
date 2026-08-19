@@ -61,40 +61,18 @@ export default function HomePageClient({ products, categories }: HomePageClientP
         </div>
       </section>
 
-      {/* Value Props */}
-      <section className="py-16 bg-muted">
-        <div className="container mx-auto px-4">
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
-            <div className="flex flex-col items-center text-center p-6">
-              <div className="w-14 h-14 bg-secondary rounded-full flex items-center justify-center mb-4">
-                <Leaf className="w-7 h-7 text-primary" />
-              </div>
-              <h3 className="font-semibold text-lg mb-2 text-foreground">100% Natural</h3>
-              <p className="text-muted-foreground">
-                Pure botanical ingredients sourced directly from African farms
-              </p>
-            </div>
-            <div className="flex flex-col items-center text-center p-6">
-              <div className="w-14 h-14 bg-secondary rounded-full flex items-center justify-center mb-4">
-                <Sparkles className="w-7 h-7 text-primary" />
-              </div>
-              <h3 className="font-semibold text-lg mb-2 text-foreground">Premium Quality</h3>
-              <p className="text-muted-foreground">
-                Carefully crafted formulas for visible, lasting results
-              </p>
-            </div>
-            <div className="flex flex-col items-center text-center p-6">
-              <div className="w-14 h-14 bg-secondary rounded-full flex items-center justify-center mb-4">
-                <Heart className="w-7 h-7 text-primary" />
-              </div>
-              <h3 className="font-semibold text-lg mb-2 text-foreground">Ethically Sourced</h3>
-              <p className="text-muted-foreground">
-                Supporting local communities and sustainable practices
-              </p>
-            </div>
-          </div>
-        </div>
-      </section>
+      {/* Event Banner – full width */}
+<section className="w-full bg-primary">
+  <div className="relative w-full" style={{ aspectRatio: '16/12' }}>
+    <Image
+      src="/images/event1.jpg"
+      alt="Agro-Processing Africa Summit 2026"
+      fill
+      className="object-contain"
+      priority
+    />
+  </div>
+</section>
 
       {/* Featured Products Section */}
       <section className="py-16 container mx-auto px-4">

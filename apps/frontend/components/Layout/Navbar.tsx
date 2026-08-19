@@ -4,7 +4,7 @@
 import Image from 'next/image';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
-import { ShoppingCart, User, Menu, X } from 'lucide-react';
+import { ShoppingCart, User } from 'lucide-react';
 import { useCart } from '@/lib/CartContext';
 import { useAuth } from '@/lib/AuthContext';
 import { useState } from 'react';
@@ -14,6 +14,8 @@ const navLinks = [
   { name: 'Flower', href: '/flower' },
   { name: 'Edible', href: '/edible' },
   { name: 'Apothecary', href: '/apothecary' },
+  { name: 'Consulting', href: '/consulting' },
+  { name: 'Training', href: '/training' },
   { name: 'About Us', href: '/about' },
 ];
 
@@ -21,54 +23,66 @@ export default function Navbar() {
   const pathname = usePathname();
   const { cartCount } = useCart();
   const { user } = useAuth();
-  const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+  const [isOpen, setIsOpen] = useState(false);
+
+  const toggleMenu = () => setIsOpen(!isOpen);
+  const closeMenu = () => setIsOpen(false);
 
   return (
-    <header className="bg-card shadow-sm sticky top-0 z-50 border-b border-border">
-      {/* Top row */}
-      <div className="container mx-auto px-4 py-4 flex items-center justify-between">
-        {/* Mobile menu button */}
+    <header className="sticky top-0 z-50 bg-card shadow-sm border-b border-border">
+      <div className="container mx-auto px-4 py-4 flex items-center justify-between relative">
+        {/* Left: Hamburger button – stays above overlay */}
         <button
-          onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
-          className="lg:hidden p-2 hover:bg-muted rounded-md focus-visible:ring-2 focus-visible:ring-primary"
-          aria-label={mobileMenuOpen ? 'Close menu' : 'Open menu'}
-        >
-          {mobileMenuOpen ? (
-            <X className="w-6 h-6 text-foreground" />
-          ) : (
-            <Menu className="w-6 h-6 text-foreground" />
-          )}
-        </button>
+  onClick={toggleMenu}
+  className="relative z-50 p-2 hover:bg-muted rounded-md focus-visible:ring-2 focus-visible:ring-primary transition-colors group"
+  aria-label={isOpen ? 'Close menu' : 'Open menu'}
+>
+  <div className="w-8 h-8 flex flex-col items-center justify-center gap-1.5 overflow-visible">
+    <span
+      className={`
+        block w-6 h-0.5 bg-foreground rounded-full transition-all duration-300 origin-center
+        ${isOpen ? 'rotate-45 translate-y-2' : ''}
+      `}
+    />
+    <span
+      className={`
+        block w-6 h-0.5 bg-foreground rounded-full transition-all duration-300
+        ${isOpen ? 'opacity-0' : ''}
+      `}
+    />
+    <span
+      className={`
+        block w-6 h-0.5 bg-foreground rounded-full transition-all duration-300 origin-center
+        ${isOpen ? '-rotate-45 -translate-y-2' : ''}
+      `}
+    />
+  </div>
+</button>
 
-        {/* Logo */}
-        <Link
-          href="/"
-          className="flex items-center gap-2"
-        >
+        {/* Center: Logo */}
+        <Link href="/" className="flex items-center" onClick={closeMenu}>
           <Image
             src="/va-logo.jpg"
             alt="VerdeAfrique Botanicals"
             width={180}
             height={50}
-            className="h-25 w-auto"
+            className="h-20 w-auto"
             priority
           />
         </Link>
 
-        {/* Icons */}
+        {/* Right: User & Cart icons */}
         <div className="flex items-center gap-2">
-          <Link 
-            href="/account" 
+          <Link
+            href="/account"
             className="p-2 hover:bg-muted rounded-full transition-colors focus-visible:ring-2 focus-visible:ring-primary"
             aria-label="Account"
           >
             <User className="w-6 h-6 text-foreground" />
-            {user && (
-              <span className="sr-only">Logged in as {user.email}</span>
-            )}
+            {user && <span className="sr-only">Logged in as {user.email}</span>}
           </Link>
-          <Link 
-            href="/cart" 
+          <Link
+            href="/cart"
             className="p-2 hover:bg-muted rounded-full transition-colors relative focus-visible:ring-2 focus-visible:ring-primary"
             aria-label={`Cart with ${cartCount} items`}
           >
@@ -82,25 +96,34 @@ export default function Navbar() {
         </div>
       </div>
 
-      {/* Desktop navigation */}
-      <nav className="hidden lg:block border-t border-border">
-        <div className="container mx-auto px-4">
-          <ul className="flex flex-wrap justify-center gap-8 py-3 text-sm font-medium">
+      {/* Full-screen overlay – now with pointer-events-auto and z-40 */}
+      <div
+        className={`
+          fixed inset-0 z-40 bg-background/95 backdrop-blur-sm transition-all duration-300
+          ${isOpen ? 'opacity-100 pointer-events-auto' : 'opacity-0 pointer-events-none'}
+        `}
+        role="dialog"
+        aria-modal="true"
+        aria-label="Navigation menu"
+        onClick={closeMenu} // optional: click outside to close
+      >
+        <nav className="h-full flex items-center justify-center" onClick={(e) => e.stopPropagation()}>
+          <ul className="flex flex-col items-center gap-8 text-2xl font-serif text-foreground">
             {navLinks.map((link) => {
-              const isActive = pathname === link.href || 
+              const isActive = pathname === link.href ||
                 (link.href.includes('?') && pathname.includes(link.href.split('?')[0]));
               return (
                 <li key={link.name}>
-                    <Link
-                      href={link.href}
-                      className={`py-2 font-lato transition-colors hover:text-primary ${
-                        isActive
-                          ? 'text-primary border-b-2 border-primary'
-                          : 'text-muted-foreground'
-                      }`}
-                    >
-                      {link.name}
-                    </Link>
+                  <Link
+                    href={link.href}
+                    onClick={closeMenu}
+                    className={`
+                      hover:text-primary transition-colors
+                      ${isActive ? 'text-primary border-b-2 border-primary' : 'text-muted-foreground'}
+                    `}
+                  >
+                    {link.name}
+                  </Link>
                 </li>
               );
             })}
@@ -108,41 +131,19 @@ export default function Navbar() {
               <li>
                 <Link
                   href="/admin"
-                  className={`py-2 font-lato transition-colors hover:text-primary ${pathname.startsWith('/admin') ? 'text-primary border-b-2 border-primary' : 'text-muted-foreground'}`}
+                  onClick={closeMenu}
+                  className={`
+                    hover:text-primary transition-colors
+                    ${pathname.startsWith('/admin') ? 'text-primary border-b-2 border-primary' : 'text-muted-foreground'}
+                  `}
                 >
                   Admin
                 </Link>
               </li>
             )}
           </ul>
-        </div>
-      </nav>
-
-      {/* Mobile navigation */}
-      {mobileMenuOpen && (
-        <nav className="lg:hidden border-t border-border bg-card">
-          <ul className="flex flex-col py-2">
-            {navLinks.map((link) => {
-              const isActive = pathname === link.href;
-              return (
-                <li key={link.name}>
-                  <Link
-                    href={link.href}
-                    onClick={() => setMobileMenuOpen(false)}
-                    className={`block px-4 py-3 font-lato transition-colors hover:bg-muted ${
-                      isActive
-                        ? 'text-primary bg-secondary'
-                        : 'text-muted-foreground'
-                    }`}
-                  >
-                    {link.name}
-                  </Link>
-                </li>
-              );
-            })}
-          </ul>
         </nav>
-      )}
+      </div>
     </header>
   );
 }
