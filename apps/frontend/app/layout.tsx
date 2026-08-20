@@ -7,6 +7,7 @@ import Navbar from "@/components/Layout/Navbar";
 import { Inter, Libertinus_Serif, Lato } from "next/font/google";
 import Link from "next/link";
 import Image from "next/image";
+import { FaInstagram, FaFacebook, FaLinkedin, FaPhone } from "react-icons/fa";
 
 const inter = Inter({
   subsets: ["latin"],
@@ -73,9 +74,10 @@ export default function RootLayout({
 
 function Footer() {
   return (
-    <footer className="bg-card border-t border-border py-12 mt-auto">
+    <footer className="bg-card border-t border-border py-8 mt-auto">
       <div className="container mx-auto px-4">
-        <div className="grid grid-cols-1 md:grid-cols-4 gap-8">
+        <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
+          {/* Logo */}
           <div>
             <Link href="/" className="inline-block">
               <Image
@@ -83,66 +85,73 @@ function Footer() {
                 alt="VerdeAfrique"
                 width={410}
                 height={110}
-                className="h-50 w-auto"
+                className="h-40 w-auto"
               />
             </Link>
-            
           </div>
+
+          {/* Shop */}
           <div>
-            <h4 className="font-semibold text-foreground mb-4">Shop</h4>
-            <ul className="space-y-2 text-sm">
+            <h4 className="font-semibold text-foreground mb-3 text-xs uppercase tracking-wider">
+              Shop
+            </h4>
+            <ul className="space-y-1.5 text-xs">
               <li>
-                <a
+                <Link
                   href="/products?category=hair"
                   className="text-muted-foreground hover:text-foreground transition-colors"
                 >
                   Hair
-                </a>
+                </Link>
               </li>
               <li>
-                <a
+                <Link
                   href="/products?category=body"
                   className="text-muted-foreground hover:text-foreground transition-colors"
                 >
                   Body
-                </a>
+                </Link>
               </li>
               <li>
-                <a
+                <Link
                   href="/products?category=face"
                   className="text-muted-foreground hover:text-foreground transition-colors"
                 >
                   Face
-                </a>
+                </Link>
               </li>
               <li>
-                <a
+                <Link
                   href="/products"
                   className="text-muted-foreground hover:text-foreground transition-colors"
                 >
                   All Products
-                </a>
+                </Link>
               </li>
             </ul>
           </div>
+
+          {/* Company */}
           <div>
-            <h4 className="font-semibold text-foreground mb-4">Company</h4>
-            <ul className="space-y-2 text-sm">
+            <h4 className="font-semibold text-foreground mb-3 text-xs uppercase tracking-wider">
+              Company
+            </h4>
+            <ul className="space-y-1.5 text-xs">
               <li>
-                <a
+                <Link
                   href="/about"
                   className="text-muted-foreground hover:text-foreground transition-colors"
                 >
                   About Us
-                </a>
+                </Link>
               </li>
               <li>
-                <a
+                <Link
                   href="/account"
                   className="text-muted-foreground hover:text-foreground transition-colors"
                 >
                   My Account
-                </a>
+                </Link>
               </li>
               <li>
                 <Link
@@ -154,18 +163,61 @@ function Footer() {
               </li>
             </ul>
           </div>
+
+          {/* Contact */}
           <div>
-            <h4 className="font-semibold text-foreground mb-4">Support</h4>
-            <ul className="space-y-2 text-sm">
+            <h4 className="font-semibold text-foreground mb-3 text-xs uppercase tracking-wider">
+              Contact
+            </h4>
+            <ul className="space-y-1.5 text-xs">
               <li>
-                <span className="text-muted-foreground">
-                  help@verdeafrique.com
-                </span>
+                <a
+                  href="https://www.instagram.com/thinkgreen.sa"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="text-muted-foreground hover:text-foreground transition-colors flex items-center gap-1.5"
+                >
+                  <FaInstagram className="text-sm" />
+                  Instagram
+                </a>
+              </li>
+              <li>
+                <a
+                  href="https://www.facebook.com/ThinkGreen"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="text-muted-foreground hover:text-foreground transition-colors flex items-center gap-1.5"
+                >
+                  <FaFacebook className="text-sm" />
+                  Facebook
+                </a>
+              </li>
+              <li>
+                <a
+                  href="https://linkedin.com/in/thinkgreen-intl0213aa42a"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="text-muted-foreground hover:text-foreground transition-colors flex items-center gap-1.5"
+                >
+                  <FaLinkedin className="text-sm" />
+                  LinkedIn
+                </a>
+              </li>
+              <li>
+                <a
+                  href="tel:+270982792922"
+                  className="text-muted-foreground hover:text-foreground transition-colors flex items-center gap-1.5"
+                >
+                  <FaPhone className="text-sm" />
+                  087 149 0260
+                </a>
               </li>
             </ul>
           </div>
         </div>
-        <div className="border-t border-border mt-8 pt-8 text-center text-sm text-muted-foreground">
+
+        {/* Copyright */}
+        <div className="border-t border-border mt-6 pt-6 text-center text-xs text-muted-foreground">
           <p>
             &copy; {new Date().getFullYear()} VerdeAfrique. All rights reserved.
           </p>
