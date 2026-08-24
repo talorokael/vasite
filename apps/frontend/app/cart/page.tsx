@@ -11,6 +11,7 @@ import toast from 'react-hot-toast';
 import Link from 'next/link';
 import { useState } from 'react';
 import { Trash2, Minus, Plus, ShoppingBag, Loader2, CreditCard } from 'lucide-react';
+import { formatPrice } from '@/lib/formatPrice'; // 👈 import
 
 export default function CartPage() {
   const { cart, isLoading, updateQuantity, removeItem, cartCount } = useCart();
@@ -29,7 +30,6 @@ export default function CartPage() {
     }
 
     setIsCheckingOut(true);
-    // Redirect to address selection page for two-step checkout
     router.push('/checkout/address');
     setIsCheckingOut(false);
   };
@@ -136,7 +136,7 @@ export default function CartPage() {
                   {item.product.name}
                 </h3>
                 <p className="text-primary font-bold">
-                  ${(item.product.price / 100).toFixed(2)}
+                  {formatPrice(item.product.price)} {/* 👈 updated */}
                 </p>
 
                 {/* Quantity Controls */}
@@ -181,7 +181,7 @@ export default function CartPage() {
               {/* Item Total */}
               <div className="text-right">
                 <p className="font-bold text-foreground">
-                  ${((item.product.price * item.quantity) / 100).toFixed(2)}
+                  {formatPrice(item.product.price * item.quantity)} {/* 👈 updated */}
                 </p>
               </div>
             </article>
@@ -198,7 +198,7 @@ export default function CartPage() {
             <div className="space-y-3 mb-6">
               <div className="flex justify-between text-muted-foreground">
                 <span>Subtotal</span>
-                <span>${(subtotal / 100).toFixed(2)}</span>
+                <span>{formatPrice(subtotal)}</span> {/* 👈 updated */}
               </div>
               <div className="flex justify-between text-muted-foreground">
                 <span>Shipping</span>
@@ -206,7 +206,7 @@ export default function CartPage() {
               </div>
               <div className="border-t border-border pt-3 flex justify-between font-bold text-foreground text-lg">
                 <span>Total</span>
-                <span>${(subtotal / 100).toFixed(2)}</span>
+                <span>{formatPrice(subtotal)}</span> {/* 👈 updated */}
               </div>
             </div>
 

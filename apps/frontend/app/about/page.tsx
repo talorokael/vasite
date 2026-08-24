@@ -59,13 +59,10 @@ export default function AboutPage() {
           <div className="prose prose-lg max-w-none text-muted-foreground">
             <p className="text-lg leading-relaxed mb-6">
               At VerdeAfrique, we believe in the transformative power of nature. 
-              Our mission is to connect the rich botanical heritage of Africa with 
-              conscious consumers worldwide who seek effective, sustainable, and 
-              ethically sourced beauty and wellness products.
+              Our mission is to support sustainable enterprise, cannabis/hemp businesses and natural product development, while andancing disablity inclusion.
             </p>
             <p className="text-lg leading-relaxed">
-              Every product in our collection—from Hair to Body, Face to Flower, 
-              Edible to Apothecary—is carefully crafted using traditional knowledge 
+              Every product in our collection is carefully crafted using traditional knowledge 
               combined with modern science to deliver visible, lasting results.
             </p>
           </div>
