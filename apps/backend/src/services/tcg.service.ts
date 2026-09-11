@@ -1,8 +1,9 @@
 import axios, { AxiosInstance } from 'axios';
+import crypto from 'crypto';
 
-const TCG_API_BASE = process.env.TCG_SANDBOX_MODE === 'true'
-  ? 'https://api.shiplogic.com'
-  : 'https://api.shiplogic.com';
+// ===== ENVIRONMENT =====
+// Use sandbox URL if TCG_SANDBOX_MODE=true, otherwise production
+const TCG_API_BASE = 'https://api.shiplogic.com';
 
 const tcgClient = (): AxiosInstance =>
   axios.create({
@@ -11,8 +12,12 @@ const tcgClient = (): AxiosInstance =>
       Authorization: `Bearer ${process.env.TCG_API_KEY}`,
       'Content-Type': 'application/json',
     },
-    timeout: 20_000,
+    timeout: 30_000,
   });
+
+function requireApiKey() {
+  if (!process.env.TCG_API_KEY) throw new Error('TCG_API_KEY is not configured');
+}
 
 export interface TcgShipmentResult {
   trackingNumber?: string;
@@ -21,23 +26,25 @@ export interface TcgShipmentResult {
   raw?: unknown;
 }
 
-interface TcgShipmentOrder {
+export interface TcgShipmentOrder {
   id: string;
   user?: {
     name?: string | null;
+    email?: string | null;
   };
 }
 
-interface TcgShipmentAddress {
+export interface TcgShipmentAddress {
   name?: string;
   street: string;
   city: string;
   postalCode: string;
   country?: string;
   phone?: string;
+  email?: string;
 }
 
-interface TcgShipmentItem {
+export interface TcgShipmentItem {
   description?: string;
   quantity?: number;
   weight?: number;
@@ -49,52 +56,116 @@ interface TcgShipmentItem {
     weight?: number;
     sku?: string;
   };
+  dimensions?: { length: number; width: number; height: number };
 }
 
-export async function createTCGShipment(order: TcgShipmentOrder, address: TcgShipmentAddress, items: TcgShipmentItem[]): Promise<TcgShipmentResult> {
+export async function createTCGShipment(
+  order: TcgShipmentOrder,
+  address: TcgShipmentAddress,
+  items: TcgShipmentItem[]
+): Promise<TcgShipmentResult> {
+  requireApiKey();
   const client = tcgClient();
 
-  // Map items into a simple parcels/items list. Adjust per Shiplogic docs as needed.
+  // ===== Build the payload according to Shiplogic API specs =====
   const payload = {
-    reference: order.id,
-    to: {
-      name: address.name || `${order.user?.name || ''}`,
-      street: address.street,
-      city: address.city,
-      postal_code: address.postalCode,
-      country: address.country || 'South Africa',
-      phone: address.phone,
+    // Optional reference for your own tracking
+    customer_reference: order.id,
+    customer_reference_name: 'Order no.',
+
+    // ----- Collection (pickup) address -----
+    collection_address: {
+      type: 'business',                           // or 'residential'
+      company: 'VerdeAfrique Botanicals',
+      street_address: '90 Ruth Street',
+      local_area: 'Johannesburg',                 // suburb/area
+      city: 'Johannesburg',
+      zone: 'Gauteng',                            // province/state
+      country: 'ZA',                              // ISO code, not full name
+      code: '1709',                               // postal code
     },
-    items: items.map((it) => ({
-      description: it.description || it.product?.name || 'Item',
-      quantity: it.quantity || 1,
-      weight: it.weight || (it.product?.weight ?? 0) || 0,
-      value: it.value || it.price || 0,
-      sku: it.sku || it.product?.sku || undefined,
+    collection_contact: {
+      name: 'VerdeAfrique Warehouse',
+      mobile_number: '+27678667662',
+      email: 'thinkgreenintl@gmail.com',
+    },
+
+    // ----- Delivery (destination) address -----
+    delivery_address: {
+      type: 'residential',                        // or 'business'
+      street_address: address.street,
+      city: address.city,
+      zone: 'Gauteng',                            // you can make this dynamic or hardcode
+      country: 'ZA',                              // always ISO
+      code: address.postalCode,
+    },
+    delivery_contact: {
+      name: address.name || order.user?.name || 'Customer',
+      mobile_number: address.phone || '',
+      email: address.email || order.user?.email || '',
+    },
+
+    // ----- Service level (required) -----
+    service_level_code: 'ECO',                    // ECO, STANDARD, EXPRESS (choose one)
+
+    // ----- Parcels (items) -----
+    parcels: items.map((it) => ({
+      parcel_description: it.description || it.product?.name || 'Item',
+      submitted_length_cm: it.dimensions?.length || 20,
+      submitted_width_cm: it.dimensions?.width || 20,
+      submitted_height_cm: it.dimensions?.height || 10,
+      submitted_weight_kg: it.weight || (it.product?.weight ?? 0) || 1,
+      // Optional: alternative_tracking_reference: it.sku || undefined,
     })),
-    // You may need to include service_code, account, sender, etc. Add per account docs.
+
+    // Optional extras
+    // mute_notifications: false,
+    // declared_value: items.reduce((sum, it) => sum + (it.value || it.price || 0), 0),
   };
 
-  try {
-    const resp = await client.post('/shipments', payload);
+  // Log the payload for debugging (remove in production)
+  console.log('📦 Payload sent to TCG:', JSON.stringify(payload, null, 2));
 
+  try {
+    console.log('📦 TCG REQUEST URL:', `${TCG_API_BASE}/shipments`);
+    const resp = await client.post('/shipments', payload);
+    console.log('📦 TCG RESPONSE:', JSON.stringify(resp.data, null, 2));
+    // Parse response – field names may vary; adjust as needed
     return {
-      trackingNumber: resp.data?.tracking_number || resp.data?.tracking_reference || resp.data?.id,
-      labelUrl: resp.data?.label_url || resp.data?.label?.url,
-      waybillNumber: resp.data?.waybill_number,
+      ...(resp.data?.tracking_number || resp.data?.tracking_reference || resp.data?.id
+        ? {
+            trackingNumber: String(
+              resp.data.tracking_number || resp.data.tracking_reference || resp.data.id
+            ),
+          }
+        : {}),
+      ...(resp.data?.label_url || resp.data?.label?.url
+        ? { labelUrl: resp.data.label_url || resp.data.label.url }
+        : {}),
+      ...(resp.data?.waybill_number || resp.data?.waybill || resp.data?.id
+        ? {
+            waybillNumber: String(resp.data.waybill_number || resp.data.waybill || resp.data.id),
+          }
+        : {}),
       raw: resp.data,
     };
   } catch (err: unknown) {
+    // Enhanced error logging
+    if (axios.isAxiosError(err)) {
+      console.error('❌ TCG API error status:', err.response?.status);
+      console.error('❌ TCG API error data:', JSON.stringify(err.response?.data, null, 2));
+    }
     const message = axios.isAxiosError(err)
       ? err.response?.data || err.message
       : err instanceof Error
-      ? err.message
-      : err;
+        ? err.message
+        : err;
     throw new Error(`TCG create shipment error: ${JSON.stringify(message)}`);
   }
 }
 
 export async function trackTCGShipment(trackingNumber: string) {
+  requireApiKey();
   const client = tcgClient();
 
   try {
@@ -104,8 +175,15 @@ export async function trackTCGShipment(trackingNumber: string) {
     const message = axios.isAxiosError(err)
       ? err.response?.data || err.message
       : err instanceof Error
-      ? err.message
-      : err;
+        ? err.message
+        : err;
     throw new Error(`TCG track shipment error: ${JSON.stringify(message)}`);
   }
+}
+
+export function verifyWebhookSignature(payload: Buffer, signature: string, secret: string): boolean {
+  const expected = crypto.createHmac('sha256', secret).update(payload).digest();
+  const normalizedSignature = signature.replace(/^sha256=/i, '');
+  const provided = Buffer.from(normalizedSignature, /^[0-9a-f]+$/i.test(normalizedSignature) ? 'hex' : 'base64');
+  return provided.length === expected.length && crypto.timingSafeEqual(expected, provided);
 }

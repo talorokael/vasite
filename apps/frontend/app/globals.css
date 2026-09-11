@@ -1,38 +1,51 @@
 @import "tailwindcss";
 
-/* Design Tokens from DESIGN.md */
 :root {
-  /* Colors */
-  --color-text-primary: #ffffff;
-  --color-text-secondary: #004236;
-  --color-text-tertiary: #373737;
-  --color-text-inverse: #131010;
-  --color-surface-base: #000000;
-  --color-surface-strong: #fafafa;
-  
-  /* Accent colors */
-  --color-accent: #004236;
-  --color-accent-hover: #003028;
-  --color-accent-light: #e8f5f0;
-  
+  /* Backgrounds (earth) */
+  --sand:        #F5F0E6;
+  --sand-deep:   #EDE5D5;
+  --clay:        #D9C9AE;
+
+  /* Foregrounds (soil & ink) */
+  --soil:        #2A2419;
+  --soil-soft:   #5A5142;
+  --bark:        #8B7B5E;
+
+  /* Brand greens */
+  --moss-deep:   #1B4332;
+  --moss:        #2D6A4F;
+  --sage:        #95D5B2;
+  --sage-pale:   #D8F3DC;
+
+  /* Accents — use sparingly */
+  --terracotta:  #C77D5A;
+  --ochre:       #D4A93E;
+
+  /* Surfaces */
+  --paper:       #FDFBF7;
+  --paper-hover: #FAF6EC;
+
   /* Semantic */
-  --background: #fafafa;
-  --foreground: #131010;
-  --card: #ffffff;
-  --card-foreground: #131010;
-  --primary: #004236;
-  --primary-foreground: #ffffff;
-  --secondary: #e8f5f0;
-  --secondary-foreground: #004236;
-  --muted: #f5f5f5;
-  --muted-foreground: #373737;
-  --destructive: #dc2626;
-  --destructive-foreground: #ffffff;
-  --border: #e5e7eb;
-  --input: #e5e7eb;
-  --ring: #004236;
-  
-  /* Spacing */
+  --background:      var(--sand);
+  --foreground:      var(--soil);
+  --card:            var(--paper);
+  --card-foreground: var(--soil);
+  --primary:         var(--moss-deep);
+  --primary-foreground: #FDFBF7;
+  --secondary:       var(--sage-pale);
+  --secondary-foreground: var(--moss-deep);
+  --muted:           var(--sand-deep);
+  --muted-foreground: var(--soil-soft);
+  --accent:          var(--terracotta);
+  --accent-foreground: #FDFBF7;
+  --destructive:     #B23A2E;
+  --destructive-foreground: #FDFBF7;
+  --border:          rgba(42, 36, 25, 0.10);
+  --border-strong:   rgba(42, 36, 25, 0.20);
+  --input:           rgba(42, 36, 25, 0.15);
+  --ring:            var(--moss-deep);
+
+  /* Spacing — unchanged */
   --space-1: 5px;
   --space-2: 6px;
   --space-3: 7px;
@@ -46,13 +59,25 @@
   --radius-xs: 3px;
   --radius-sm: 6px;
   --radius-md: 8px;
-  --radius-lg: 12px;
+  --radius-lg: 16px;
   --radius-full: 999px;
   --radius: 8px;
-  
+
   /* Motion */
   --motion-instant: 250ms;
   --motion-fast: 300ms;
+  --motion-slow: 800ms;
+  --ease-out-expo: cubic-bezier(0.16, 1, 0.3, 1);
+
+  /* Fluid type scale */
+  --text-xs:   clamp(0.75rem,  0.7rem  + 0.25vw, 0.8rem);
+  --text-sm:   clamp(0.875rem, 0.85rem + 0.25vw, 0.95rem);
+  --text-base: clamp(1rem,     0.95rem + 0.3vw,  1.125rem);
+  --text-lg:   clamp(1.125rem, 1.05rem + 0.4vw,  1.3rem);
+  --text-xl:   clamp(1.375rem, 1.2rem  + 0.7vw,  1.75rem);
+  --text-2xl:  clamp(1.75rem,  1.4rem  + 1.4vw,  2.5rem);
+  --text-3xl:  clamp(2.25rem,  1.8rem  + 2vw,    3.5rem);
+  --text-hero: clamp(3rem,     2rem    + 5vw,    6rem);
 }
 
 @theme inline {
@@ -66,13 +91,29 @@
   --color-secondary-foreground: var(--secondary-foreground);
   --color-muted: var(--muted);
   --color-muted-foreground: var(--muted-foreground);
+  --color-accent: var(--accent);
+  --color-accent-foreground: var(--accent-foreground);
   --color-destructive: var(--destructive);
   --color-destructive-foreground: var(--destructive-foreground);
   --color-border: var(--border);
   --color-input: var(--input);
   --color-ring: var(--ring);
-  --font-sans: var(--font-inter), system-ui, sans-serif;
-  --font-mono: var(--font-geist-mono), monospace;
+  --color-sand: var(--sand);
+  --color-sand-deep: var(--sand-deep);
+  --color-clay: var(--clay);
+  --color-soil: var(--soil);
+  --color-soil-soft: var(--soil-soft);
+  --color-bark: var(--bark);
+  --color-moss-deep: var(--moss-deep);
+  --color-moss: var(--moss);
+  --color-sage: var(--sage);
+  --color-sage-pale: var(--sage-pale);
+  --color-terracotta: var(--terracotta);
+  --color-ochre: var(--ochre);
+  --color-paper: var(--paper);
+  --font-sans: var(--font-body), system-ui, sans-serif;
+  --font-display: var(--font-display), Georgia, serif;
+  --font-accent: var(--font-accent), Georgia, serif;
   --radius-sm: var(--radius-sm);
   --radius-md: var(--radius-md);
   --radius-lg: var(--radius-lg);
@@ -80,14 +121,7 @@
 
 @media (prefers-color-scheme: dark) {
   :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
-    --card: #1a1a1a;
-    --card-foreground: #ededed;
-    --muted: #262626;
-    --muted-foreground: #a3a3a3;
-    --border: #262626;
-    --input: #262626;
+    --background: #EDE5D5;
   }
 }
 
@@ -124,4 +158,28 @@ select {
 a,
 button {
   transition: all var(--motion-fast) ease;
+}
+
+.grain-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 9999;
+  pointer-events: none;
+  opacity: 0.04;
+  mix-blend-mode: multiply;
+  background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
+  background-size: 180px 180px;
+}
+
+.text-display {
+  font-family: var(--font-display), Georgia, serif;
+  font-variation-settings: "SOFT" 100, "WONK" 1, "opsz" 96;
+  letter-spacing: -0.02em;
+  line-height: 1.05;
+}
+
+.text-accent-italic {
+  font-family: var(--font-accent), Georgia, serif;
+  font-style: italic;
+  letter-spacing: -0.01em;
 }

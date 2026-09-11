@@ -9,6 +9,9 @@ const envSchema = z.object({
   SESSION_SECURE_COOKIE: z.enum(['true', 'false']).transform(v => v === 'true'),
   PAYSTACK_SECRET_KEY: z.string().min(1),
   PAYSTACK_WEBHOOK_SECRET: z.string().optional(),
+  TCG_API_KEY: z.string().optional(),
+  TCG_SANDBOX_MODE: z.enum(['true', 'false']).optional(),
+  TCG_WEBHOOK_SECRET: z.string().optional(),
   PORT: z.string().default('4000').transform(Number),
 });
 

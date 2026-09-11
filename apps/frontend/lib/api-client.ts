@@ -19,6 +19,18 @@ export interface Order {
   stripeSessionId?: string;
   createdAt: string;
   updatedAt: string;
+  trackingNumber?: string | null;
+  courierStatus?: string | null;
+  courierUpdatedAt?: string | null;
+  waybillNumber?: string | null;
+  labelUrl?: string | null;
+  carrier?: string | null;
+  shipmentStatus?: string | null;
+  trackingHistory?: Array<{
+    event?: string;
+    status?: string;
+    timestamp?: string;
+  }> | null;
   items: OrderItem[];
 }
 
@@ -294,6 +306,10 @@ export class ApiClient {
       method: "PATCH",
       body: JSON.stringify({ status }),
     });
+  }
+
+  async shipOrder(orderId: string): Promise<{ order: AdminOrder; shipment: { trackingNumber?: string; labelUrl?: string } }> {
+    return this.request(`/api/admin/orders/${orderId}/ship`, { method: 'POST' });
   }
 
   // Admin: get addresses for a specific user

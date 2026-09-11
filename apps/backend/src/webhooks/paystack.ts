@@ -14,6 +14,15 @@ export const handlePaystackWebhook = async (req: Request, res: Response) => {
   // Get raw body as string
   const rawBody = (req.body as Buffer).toString('utf8');
 
+  console.log('🔑 Received signature:', req.headers['x-paystack-signature']);
+  console.log(
+    '🔑 Expected signature (computed):',
+    crypto
+      .createHmac('sha512', process.env.PAYSTACK_SECRET_KEY!)
+      .update(JSON.stringify(req.body))
+      .digest('hex')
+  );
+
   // Verify signature
   const signature = req.headers['x-paystack-signature'] as string;
   if (WEBHOOK_SECRET) {

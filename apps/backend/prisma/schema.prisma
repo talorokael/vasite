@@ -151,11 +151,17 @@ model Order {
   trackingNumber   String?      // Courier Guy tracking number
   courierStatus    String?      // "pending", "in_transit", "delivered"
   courierUpdatedAt DateTime?
+  waybillNumber    String?
+  labelUrl         String?
+  carrier          String?
+  shipmentStatus   String?
+  trackingHistory  Json?
   createdAt        DateTime    @default(now())
   updatedAt        DateTime    @updatedAt
   items            OrderItem[]
 
   @@map("orders")
+  @@index([trackingNumber])
 }
 
 model OrderItem {

@@ -35,7 +35,7 @@ export default function ProductCard({ product }: ProductCardProps) {
   };
 
   return (
-    <article className="bg-card border border-border rounded-lg overflow-hidden shadow-sm hover:shadow-md transition-shadow group">
+    <article className="bg-card border border-border rounded-lg overflow-hidden shadow-sm transition-all duration-500 ease-[cubic-bezier(0.16,1,0.3,1)] hover:-translate-y-1.5 hover:shadow-xl group">
       {/* Product Image */}
       <div className="relative w-full aspect-square bg-muted overflow-hidden">
         {product.images && product.images[0] ? (
@@ -43,7 +43,7 @@ export default function ProductCard({ product }: ProductCardProps) {
             src={product.images[0]}
             alt={product.name}
             fill
-            className="object-cover group-hover:scale-105 transition-transform duration-300"
+            className="object-cover group-hover:scale-[1.08] transition-transform duration-700"
             sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 33vw"
           />
         ) : (
@@ -64,7 +64,7 @@ export default function ProductCard({ product }: ProductCardProps) {
               </span>
             )}
           </div>
-          <p className="text-primary font-bold text-lg whitespace-nowrap">
+          <p className="text-accent font-bold text-lg whitespace-nowrap">
             {formatPrice(product.price)}
           </p>
         </div>

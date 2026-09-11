@@ -10,9 +10,9 @@ module.exports = {
   theme: {
     extend: {
       fontFamily: {
-        serif: ['var(--font-libertinus)', 'serif'],
-        libertinus: ['var(--font-libertinus)', 'serif'],
-        lato: ['var(--font-lato)', 'sans-serif'],
+        sans: ['var(--font-body)', 'system-ui', 'sans-serif'],
+        display: ['var(--font-display)', 'Georgia', 'serif'],
+        accent: ['var(--font-accent)', 'Georgia', 'serif'],
       },
     },
   },

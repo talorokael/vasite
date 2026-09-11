@@ -3,6 +3,7 @@
 import Image from 'next/image';
 import Link from 'next/link';
 import ProductBrowser from './ProductBrowser';
+import Reveal from './Reveal';
 import { Product, Category } from 'shared-types';
 import { ArrowRight, Leaf, Sparkles, Heart } from 'lucide-react';
 
@@ -35,10 +36,10 @@ export default function HomePageClient({ products, categories }: HomePageClientP
         {/* Content – left aligned, soft, minimal */}
         <div className="container mx-auto px-4 relative z-10">
           <div className="max-w-2xl text-left">
-            <h1 className="text-3xl md:text-4xl lg:text-5xl font-bold text-white/90 mb-4 leading-tight">
+            <h1 className="text-display text-white/95 mb-4 max-w-2xl" style={{ fontSize: 'var(--text-hero)' }}>
               Naturally African,<br />Globally Loved
             </h1>
-            <p className="text-base md:text-lg text-white/70 max-w-xl mb-6 leading-relaxed">
+            <p className="text-base md:text-lg text-white/70 max-w-xl mb-6 font-light leading-relaxed">
               Premium skincare, body, and beauty products inspired by African botanicals.
               Pure ingredients, sustainable sourcing, transformative results.
             </p>
@@ -76,40 +77,44 @@ export default function HomePageClient({ products, categories }: HomePageClientP
 
       {/* Featured Products Section */}
       <section className="py-16 container mx-auto px-4">
-        <div className="flex items-center justify-between mb-8">
-          <h2 className="text-2xl lg:text-3xl font-bold text-foreground">Featured Products</h2>
-          <Link 
-            href="/products" 
-            className="text-primary hover:underline font-medium flex items-center gap-1"
-          >
-            View all
-            <ArrowRight className="w-4 h-4" />
-          </Link>
-        </div>
-        <ProductBrowser initialProducts={featuredProducts} categories={categories} />
+        <Reveal>
+          <div className="flex items-center justify-between mb-8">
+            <h2 className="text-2xl lg:text-3xl font-bold text-foreground">Featured Products</h2>
+            <Link 
+              href="/products" 
+              className="text-primary hover:underline font-medium flex items-center gap-1"
+            >
+              View all
+              <ArrowRight className="w-4 h-4" />
+            </Link>
+          </div>
+          <ProductBrowser initialProducts={featuredProducts} categories={categories} />
+        </Reveal>
       </section>
 
       {/* Categories CTA */}
       <section className="py-16 bg-secondary">
-        <div className="container mx-auto px-4 text-center">
-          <h2 className="text-2xl lg:text-3xl font-bold text-secondary-foreground mb-4">
-            Explore Our Collections
-          </h2>
-          <p className="text-muted-foreground mb-8 max-w-2xl mx-auto">
-            From nourishing hair care to revitalizing skincare, find the perfect products for your wellness journey.
-          </p>
-          <div className="flex flex-wrap justify-center gap-3">
-            {['Hair', 'Body', 'Face', 'Flower', 'Edible', 'Apothecary'].map((category) => (
-              <Link
-                key={category}
-                href={`/products?category=${category.toLowerCase()}`}
-                className="px-6 py-2 bg-card text-foreground rounded-full border border-border hover:border-primary hover:text-primary transition-colors"
-              >
-                {category}
-              </Link>
-            ))}
+        <Reveal>
+          <div className="container mx-auto px-4 text-center">
+            <h2 className="text-2xl lg:text-3xl font-bold text-secondary-foreground mb-4">
+              Explore Our Collections
+            </h2>
+            <p className="text-muted-foreground mb-8 max-w-2xl mx-auto">
+              From nourishing hair care to revitalizing skincare, find the perfect products for your wellness journey.
+            </p>
+            <div className="flex flex-wrap justify-center gap-3">
+              {['Hair', 'Body', 'Face', 'Flower', 'Edible', 'Apothecary'].map((category) => (
+                <Link
+                  key={category}
+                  href={`/products?category=${category.toLowerCase()}`}
+                  className="px-6 py-2 bg-card text-foreground rounded-full border border-border hover:border-primary hover:text-primary transition-colors"
+                >
+                  {category}
+                </Link>
+              ))}
+            </div>
           </div>
-        </div>
+        </Reveal>
       </section>
     </main>
   );

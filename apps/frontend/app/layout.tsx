@@ -3,27 +3,30 @@ import "./globals.css";
 import { AuthProvider } from "../lib/AuthContext";
 import { CartProvider } from "@/lib/CartContext";
 import ToastProvider from "../components/ToastProvider";
+import SmoothScroll from "../components/SmoothScroll";
 import Navbar from "@/components/Layout/Navbar";
-import { Inter, Libertinus_Serif, Lato } from "next/font/google";
+import { Fraunces, Manrope, Instrument_Serif } from "next/font/google";
 import Link from "next/link";
 import Image from "next/image";
 import { FaInstagram, FaFacebook, FaLinkedin, FaPhone } from "react-icons/fa";
 
-const inter = Inter({
+const fraunces = Fraunces({
   subsets: ["latin"],
-  variable: "--font-inter",
-});
-const libertinus = Libertinus_Serif({
-  subsets: ["latin"],
-  weight: ["400", "600", "700"],
+  axes: ["SOFT", "WONK", "opsz"],
   display: "swap",
-  variable: "--font-libertinus",
+  variable: "--font-display",
 });
-const lato = Lato({
+const manrope = Manrope({
   subsets: ["latin"],
-  weight: ["400", "700"],
   display: "swap",
-  variable: "--font-lato",
+  variable: "--font-body",
+});
+const instrument = Instrument_Serif({
+  subsets: ["latin"],
+  weight: "400",
+  style: "italic",
+  display: "swap",
+  variable: "--font-accent",
 });
 
 export const metadata: Metadata = {
@@ -56,15 +59,18 @@ export default function RootLayout({
   return (
     <html
       lang="en"
-      className={`${inter.variable} ${libertinus.variable} ${lato.variable} bg-background`}
+      className={`${fraunces.variable} ${manrope.variable} ${instrument.variable} bg-background`}
     >
       <body className="font-sans antialiased">
+        <div className="grain-overlay" aria-hidden="true" />
         <AuthProvider>
           <CartProvider>
-            <Navbar />
-            <div className="min-h-screen">{children}</div>
-            <Footer />
-            <ToastProvider />
+            <SmoothScroll>
+              <Navbar />
+              <div className="min-h-screen">{children}</div>
+              <Footer />
+              <ToastProvider />
+            </SmoothScroll>
           </CartProvider>
         </AuthProvider>
       </body>

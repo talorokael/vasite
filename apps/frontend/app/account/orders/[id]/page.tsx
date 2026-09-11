@@ -131,6 +131,50 @@ export default function OrderDetailPage() {
         </div>
       </div>
 
+      {order.trackingNumber && (
+        <section className="bg-card border border-border rounded-lg p-6 mb-6">
+          <div className="flex items-center justify-between gap-4 mb-3">
+            <h2 className="font-semibold text-foreground">Shipment Tracking</h2>
+            <span className="text-sm text-muted-foreground">
+              {order.shipmentStatus ?? order.courierStatus ?? 'Pending'}
+            </span>
+          </div>
+          <p className="text-sm text-muted-foreground">
+            {order.carrier ?? 'The Courier Guy'} tracking number:{' '}
+            <a
+              href={`https://www.thecourierguy.co.za/track/${encodeURIComponent(order.trackingNumber)}`}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="font-medium text-primary hover:underline"
+            >
+              {order.trackingNumber}
+            </a>
+          </p>
+          {order.waybillNumber && (
+            <p className="mt-1 text-sm text-muted-foreground">Waybill: {order.waybillNumber}</p>
+          )}
+          {order.labelUrl && (
+            <a
+              href={order.labelUrl}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="mt-3 inline-block text-sm text-primary hover:underline"
+            >
+              Download shipping label
+            </a>
+          )}
+          {order.trackingHistory && order.trackingHistory.length > 0 && (
+            <ul className="mt-4 space-y-1 border-t border-border pt-3 text-sm text-muted-foreground">
+              {order.trackingHistory.map((event, index) => (
+                <li key={`${event.timestamp ?? 'event'}-${index}`}>
+                  {event.timestamp ? new Date(event.timestamp).toLocaleString() : 'Update'}: {event.status ?? event.event}
+                </li>
+              ))}
+            </ul>
+          )}
+        </section>
+      )}
+
       {/* Order Items */}
       <div className="bg-card border border-border rounded-lg overflow-hidden">
         <div className="p-4 border-b border-border">

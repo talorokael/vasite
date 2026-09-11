@@ -2,6 +2,7 @@ import { Router } from 'express';
 import { Prisma } from '@prisma/client';
 import { prisma } from '../lib/prisma.js';
 import { createTCGShipment, trackTCGShipment } from '../services/tcg.service.js';
+import { sendShipmentEmail } from '../services/email.service.js';
 import { authenticate } from '../middleware/auth.js';
 import { requireRole } from '../middleware/rbac.js';
 
@@ -72,20 +73,26 @@ router.post('/:orderId/ship', authenticate, requireRole(['ADMIN']), async (req, 
     });
 
     if (!order) return res.status(404).json({ error: 'Order not found' });
+    if (!['paid', 'processing'].includes(order.status)) {
+      return res.status(400).json({ error: 'Order is not ready for shipping' });
+    }
+    if (order.trackingNumber) return res.status(400).json({ error: 'Order already shipped' });
     if (!order.shippingAddress) return res.status(400).json({ error: 'No shipping address for order' });
 
     const items = order.items.map((it) => {
       const item: {
         quantity: number;
         price: number;
+        value: number;
         description: string;
         weight: number;
         sku?: string;
       } = {
         quantity: it.quantity,
         price: it.price,
+        value: it.price / 100,
         description: it.product?.name ?? 'Item',
-        weight: it.product?.weight ?? 0,
+        weight: it.product?.weight ?? 0.5,
       };
 
       if (it.product?.sku) {
@@ -101,6 +108,7 @@ router.post('/:orderId/ship', authenticate, requireRole(['ADMIN']), async (req, 
         id: order.id,
         user: {
           name: customerName,
+          email: order.user.email,
         },
       },
       {
@@ -110,25 +118,44 @@ router.post('/:orderId/ship', authenticate, requireRole(['ADMIN']), async (req, 
         postalCode: order.shippingAddress?.postalCode ?? '',
         country: order.shippingAddress?.country ?? 'South Africa',
         phone: order.shippingAddress?.phone ?? '',
+        email: order.user.email,
       },
       items
     );
 
     const updateData: Prisma.OrderUpdateInput = {
       courierUpdatedAt: new Date(),
+      carrier: 'TCG',
+      shipmentStatus: 'PENDING',
+      status: 'shipped',
+      trackingHistory: [{
+        event: 'shipment.created',
+        status: 'PENDING',
+        timestamp: new Date().toISOString(),
+        raw: shipment.raw as Prisma.InputJsonValue,
+      }],
     };
+
+    if (shipment.waybillNumber) updateData.waybillNumber = shipment.waybillNumber;
+    if (shipment.labelUrl) updateData.labelUrl = shipment.labelUrl;
 
     if (shipment.trackingNumber) {
       updateData.trackingNumber = shipment.trackingNumber;
       updateData.courierStatus = 'pending';
     }
 
-    await prisma.order.update({
+    const updatedOrder = await prisma.order.update({
       where: { id },
       data: updateData,
     });
 
-    res.json({ trackingNumber: shipment.trackingNumber, labelUrl: shipment.labelUrl, raw: shipment.raw });
+    try {
+      await sendShipmentEmail(order, shipment);
+    } catch (emailError) {
+      console.error('Shipment created but notification email failed:', emailError);
+    }
+
+    res.json({ order: updatedOrder, shipment });
   } catch (error) {
     console.error('Error creating shipment (admin):', error);
     res.status(500).json({ error: 'Failed to create shipment' });

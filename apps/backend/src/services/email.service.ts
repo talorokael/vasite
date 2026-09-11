@@ -46,3 +46,20 @@ export async function sendTransactionalEmail({
     throw error;
   }
 }
+
+export async function sendShipmentEmail(
+  order: { id: string; user: { email: string; name?: string | null } },
+  shipment: { trackingNumber?: string; labelUrl?: string },
+) {
+  const trackingLink = `https://verdeafrique.co.za/account/orders/${encodeURIComponent(order.id)}`;
+  const labelLink = shipment.labelUrl
+    ? `<p><a href="${shipment.labelUrl}">Download shipping label</a></p>`
+    : '';
+
+  return sendTransactionalEmail({
+    toEmail: order.user.email,
+    ...(order.user.name ? { toName: order.user.name } : {}),
+    subject: `Your order #${order.id} has been shipped`,
+    htmlContent: `<h1>Your order is on its way</h1><p>Order #${order.id} has been shipped via The Courier Guy.</p><p><strong>Tracking number:</strong> ${shipment.trackingNumber ?? 'Pending'}</p><p><a href="${trackingLink}">Track your order</a></p>${labelLink}<p>Thank you for shopping with us.</p>`,
+  });
+}

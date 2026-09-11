@@ -1,185 +1,259 @@
-**PROJECT_STRUCTURE.md**
-```markdown
+# VerdeAfrique Repository Structure
+
+This document reflects the repository inventory as of 2026-09-10. Dependency folders, Next.js build output, compiled output, coverage, and other ignored generated files are excluded from the tree.
+
+## Repository Tree
+
+```text
 VerdeAfrique/
-├── package.json                     # monorepo scripts (pnpm -w run ...)
-├── pnpm-workspace.yaml              # workspaces: apps/*, packages/*
-├── pnpm-lock.yaml
-├── PROJECT_STRUCTURE.md             # this file (updated for MP10)
+├── .gitignore
 ├── .github/
-│   ├── appmod/                      # (metadata, not actively used)
-│   │   └── appcat/
 │   └── workflows/
-│       └── ci.yml                   # install, lint, build
-├── .vscode/
-│   └── settings.json                # TypeScript workspace version forced
+│       └── ci.yml                         # CI build and Railway/Vercel deployment workflow
+├── Capture1.PNG                           # captured reference image
+├── DESIGN.md                              # design notes
+├── README.md                              # repository overview
+├── VerdeAfrique_README.md                  # project-specific README
+├── PROJECT_STRUCTURE.md                    # this file
+├── cart-item.json                          # sample cart item data
+├── cookies.txt                             # local/test cookie data
+├── item.json                               # sample item data
+├── login.json                              # sample login data
+├── package.json                            # pnpm monorepo scripts and overrides
+├── pnpm-lock.yaml                          # pnpm workspace lockfile
+├── pnpm-workspace.yaml                     # apps/* and packages/* workspaces
+├── tbs-landing-page.jpg                    # landing-page asset
+├── webhook-test.json                       # local courier webhook test payload
 ├── apps/
 │   ├── backend/
-│   │   ├── .env                     # DATABASE_URL, FRONTEND_URL, COOKIE_SECRET, PAYSTACK_*, etc.
+│   │   ├── .env                            # local secrets/configuration; do not commit
+│   │   ├── .env.example                    # backend environment template
 │   │   ├── .gitignore
-│   │   ├── eslint.config.js         # ESLint 9 flat config
-│   │   ├── package.json
-│   │   ├── prisma.config.ts         # Prisma 7 runtime datasource config
+│   │   ├── eslint.config.js
+│   │   ├── package.json                    # backend scripts and dependencies
+│   │   ├── package-lock.json                # npm lockfile retained for the backend
+│   │   ├── prisma.config.ts                 # Prisma 7 runtime datasource config
 │   │   ├── tsconfig.json
+│   │   ├── vitest.config.ts
 │   │   ├── prisma/
-│   │   │   ├── schema.prisma        # models: User, Session, Product, Category, Cart, CartItem, Order, OrderItem
-│   │   │   ├── seed.ts              # seeds initial categories, products, admin user (requires ADMIN_PASSWORD)
-│   │   │   └── migrations/          # all migration folders with SQL files
+│   │   │   ├── schema.prisma                # application data models
+│   │   │   ├── seed.ts                      # seed categories, products, and admin user
+│   │   │   └── migrations/
+│   │   │       ├── migration_lock.toml
+│   │   │       ├── 20260113101649_init/
+│   │   │       ├── 20260118113241_add_user_auth/
+│   │   │       ├── 20260119105721_add_token_to_session/
+│   │   │       ├── 20260205101742_add_user_metadata/
+│   │   │       ├── 20260415183303_add_performance_indexes/
+│   │   │       ├── 20260416215455/
+│   │   │       ├── 20260508141307_add_orders/
+│   │   │       ├── 20260608104108_add_address_and_tracking/
+│   │   │       ├── 20260808100141_add_expo_leads/
+│   │   │       └── 20260907120000_add_courier_guy_fields/
 │   │   ├── scripts/
-│   │   │   └── setup-admin.ts       # interactive admin account creator
-│   │   └── src/
-│   │       ├── index.ts             # Express app, globalAuth, rate limiting, CORS policy, webhook routes, health endpoint
-│   │       ├── lib/
-│   │       │   ├── auth.ts          # session creation/validation, password hashing (bcrypt 12 rounds)
-│   │       │   ├── cache.ts         # TTL cache with getCached() and clearCache(keyPattern?)
-│   │       │   ├── env.ts           # environment variable validation and defaults
-│   │       │   ├── logger.ts        # structured logging utility
-│   │       │   └── prisma.ts        # PrismaClient singleton — forces import 'dotenv/config' at module init, validates DATABASE_URL, uses PrismaPg adapter + pg Pool
-│   │       ├── middleware/
-│   │       │   ├── auth.ts          # authenticate (cookie + header)
-│   │       │   ├── globalAuth.ts    # attaches req.user using session_token cookie (for all requests)
-│   │       │   ├── perUserRateLimit.ts # rate limiter factory using user.id or ipKeyGenerator (IPv6 /56 masking)
-│   │       │   ├── rbac.ts          # requireRole (admin / user)
-│   │       │   └── requestId.ts     # request ID tracking middleware
-│   │       ├── routes/
-│   │       │   ├── address.ts        # Address CRUD (create, list, update, delete, set default)
-│   │       │   ├── adminOrders.ts   # Admin order management (list, status updates, shipment tracking)
-│   │       │   ├── adminUsers.ts    # Admin user list, role management (ADMIN/USER)
-│   │       │   ├── auth.ts          # register, login, logout, getMe (validates session)
-│   │       │   ├── cart.ts          # get cart, add/update/delete items, POST /merge (guest cart merge)
-│   │       │   ├── categories.ts    # list categories (with product counts)
-│   │       │   ├── checkout.ts      # Paystack transaction initialization
-│   │       │   ├── health.ts        # health check endpoint (DB latency verification)
-│   │       │   ├── orders.ts        # user order history, order details
-│   │       │   ├── products.ts      # CRUD, pagination, soft delete, calls clearCache() after mutations
-│   │       │   ├── stats.ts         # dashboard counts (cached, cleared on product changes)
-│   │       │   └── users.ts         # list users, change role
-│   │       ├── services/
-│   │       │   ├── email.service.ts # Brevo transactional email (customer + admin notifications)
-│   │       │   ├── sms.service.ts   # SMS notification service (optional)
-│   │       │   └── tcg.service.ts   # Courier Guy API client (planned)
-│   │       ├── webhooks/
-│   │       │   ├── courier.ts       # Courier Guy webhook handler (planned)
-│   │       │   └── paystack.ts      # handles charge.success, signature verification, idempotency check, order creation, cart clearance, notifications
-│   │       └── types/
-│   │           └── express.d.ts     # extends Request with `user` property
-│   │
+│   │   │   ├── setup-admin.ts               # interactive admin account setup
+│   │   │   └── update-descriptions.ts       # product description utility
+│   │   ├── src/
+│   │   │   ├── index.ts                    # Express app, middleware, routes, and webhook registration
+│   │   │   ├── lib/
+│   │   │   │   ├── auth.ts                 # sessions and password hashing
+│   │   │   │   ├── cache.ts                # TTL cache and invalidation
+│   │   │   │   ├── env.ts                  # Zod environment validation
+│   │   │   │   ├── logger.ts               # structured logging
+│   │   │   │   └── prisma.ts               # PrismaClient singleton with PostgreSQL adapter
+│   │   │   ├── middleware/
+│   │   │   │   ├── auth.ts                 # cookie and bearer authentication
+│   │   │   │   ├── globalAuth.ts           # attaches the current user to requests
+│   │   │   │   ├── perUserRateLimit.ts     # user/IP rate limiting
+│   │   │   │   ├── rbac.ts                 # role-based access control
+│   │   │   │   └── requestId.ts             # request ID middleware
+│   │   │   ├── routes/
+│   │   │   │   ├── address.ts              # address CRUD and default address
+│   │   │   │   ├── adminOrders.ts           # admin order status and shipment actions
+│   │   │   │   ├── adminUsers.ts            # admin user management
+│   │   │   │   ├── auth.ts                  # register, login, logout, and current user
+│   │   │   │   ├── cart.ts                  # cart operations and guest merge
+│   │   │   │   ├── categories.ts            # category listing
+│   │   │   │   ├── checkout.ts              # Paystack checkout initialization
+│   │   │   │   ├── expo.ts                  # expo lead routes
+│   │   │   │   ├── health.ts                # database health and latency check
+│   │   │   │   ├── orders.ts                # customer order history and details
+│   │   │   │   ├── products.ts              # product CRUD and pagination
+│   │   │   │   ├── stats.ts                 # cached admin statistics
+│   │   │   │   └── users.ts                 # user routes
+│   │   │   ├── services/
+│   │   │   │   ├── email.service.ts         # Brevo transactional email
+│   │   │   │   ├── sms.service.ts           # optional SMS notifications
+│   │   │   │   └── tcg.service.ts           # Shiplogic/The Courier Guy API client
+│   │   │   ├── types/
+│   │   │   │   └── express.d.ts             # Express request user typing
+│   │   │   └── webhooks/
+│   │   │       ├── courier.ts               # static Bearer-token courier status webhook
+│   │   │       └── paystack.ts               # payment webhook and order creation
+│   │   └── test/
+│   │       ├── cacheInvalidation.test.ts
+│   │       ├── cartMerge.test.ts
+│   │       ├── globalSetup.ts
+│   │       ├── helpers.ts
+│   │       ├── rateLimit.test.ts
+│   │       └── setup.ts
 │   └── frontend/
-│       ├── .env.local               # NEXT_PUBLIC_API_URL
 │       ├── .gitignore
-│       ├── eslint.config.mjs        # Next.js compatible ESLint config
-│       ├── next.config.ts           # with reactStrictMode: true
+│       ├── eslint.config.mjs
+│       ├── next-env.d.ts
+│       ├── next.config.ts
 │       ├── package.json
-│       ├── postcss.config.mjs       # uses @tailwindcss/postcss
-│       ├── tailwind.config.js       # Tailwind v4 (compatible)
+│       ├── playwright.config.ts
+│       ├── postcss.config.mjs
+│       ├── README.md
+│       ├── tailwind.config.js
 │       ├── tsconfig.json
-│       ├── .next/                   # build cache (ignored)
+│       ├── vitest.config.ts
 │       ├── app/
-│       │   ├── globals.css          # Tailwind imports
-│       │   ├── layout.tsx           # root layout, AuthProvider, CartProvider
-│       │   ├── page.tsx             # homepage (server component with server-side health probe and API fallback URL handling)
+│       │   ├── favicon.ico
+│       │   ├── globals.css
+│       │   ├── layout.tsx                  # root providers and layout
+│       │   ├── page.tsx                    # homepage
+│       │   ├── about/page.tsx
 │       │   ├── account/
-│       │   │   └── orders/          # user order history and details
+│       │   │   ├── layout.tsx
+│       │   │   ├── page.tsx
+│       │   │   ├── addresses/page.tsx
+│       │   │   ├── addresses/new/page.tsx
+│       │   │   ├── addresses/[id]/edit/page.tsx
+│       │   │   ├── orders/page.tsx
+│       │   │   └── orders/[id]/page.tsx     # order detail and shipment tracking
 │       │   ├── admin/
-│       │   │   ├── layout.tsx       # server‑side auth guard (reads client_token)
-│       │   │   ├── page.tsx         # admin dashboard (stats)
-│       │   │   ├── orders/          # admin order management (list, status update)
-│       │   │   ├── products/
-│       │   │   │   ├── page.tsx     # product list (server + client table)
-│       │   │   │   ├── ProductsTable.tsx  # client component with soft‑delete toggle
-│       │   │   │   ├── [id]/
-│       │   │   │   │   └── edit/    # edit product form
-│       │   │   │   └── new/         # create product form
-│       │   │   └── users/
-│       │   │       └── page.tsx     # user management list
-│       │   ├── cart/
-│       │   │   └── page.tsx         # shopping cart page, checkout button to Paystack
-│       │   ├── login/
-│       │   │   └── page.tsx
-│       │   ├── order/
-│       │   │   └── success/         # payment success page (reads reference)
-│       │   └── register/
-│       │       └── page.tsx
+│       │   │   ├── layout.tsx               # admin authentication guard
+│       │   │   ├── page.tsx                 # admin dashboard
+│       │   │   ├── customers/page.tsx
+│       │   │   ├── customers/[id]/page.tsx
+│       │   │   ├── orders/page.tsx           # status and Ship order controls
+│       │   │   ├── users/page.tsx
+│       │   │   └── products/
+│       │   │       ├── page.tsx
+│       │   │       ├── ProductsTable.tsx
+│       │   │       ├── error.tsx
+│       │   │       ├── new/page.tsx
+│       │   │       └── [id]/edit/page.tsx
+│       │   ├── apothecary/page.tsx
+│       │   ├── cart/page.tsx
+│       │   ├── checkout/
+│       │   │   ├── address/page.tsx
+│       │   │   └── payment/page.tsx
+│       │   ├── conferences/page.tsx
+│       │   ├── consulting/page.tsx
+│       │   ├── cosmetics/page.tsx
+│       │   ├── edible/page.tsx
+│       │   ├── expo/page.tsx
+│       │   ├── flower/page.tsx
+│       │   ├── login/page.tsx
+│       │   ├── order/success/page.tsx
+│       │   ├── products/
+│       │   │   ├── page.tsx
+│       │   │   ├── error.tsx
+│       │   │   └── [id]/page.tsx
+│       │   ├── register/page.tsx
+│       │   └── training/page.tsx
 │       ├── components/
+│       │   ├── AddToCartButton.tsx
 │       │   ├── CategoryFilter.tsx
+│       │   ├── DebugAuth.tsx
+│       │   ├── EmptyState.tsx
 │       │   ├── HomePageClient.tsx
+│       │   ├── ImageWithFallback.tsx
 │       │   ├── LoginForm.tsx
-│       │   ├── ProductBrowser.tsx   # client component for product listing (skips SWR fetch when initial products are already available)
-│       │   ├── ProductCard.tsx      # Add to Cart button (uses CartContext)
+│       │   ├── placeholder.ts
+│       │   ├── ProductBrowser.test.tsx
+│       │   ├── ProductBrowser.tsx
+│       │   ├── ProductCard.tsx
 │       │   ├── RegisterForm.tsx
-│       │   └── Layout/
-│       │       └── Navbar.tsx
+│       │   ├── SkeletonCart.tsx
+│       │   ├── SkeletonProductGrid.tsx
+│       │   ├── SkeletonTable.tsx
+│       │   ├── SwitchUserPrompt.tsx
+│       │   ├── ToastProvider.tsx
+│       │   ├── admin/DashboardStats.tsx
+│       │   └── Layout/Navbar.tsx
+│       ├── e2e/cart-flow.spec.ts
 │       ├── lib/
-│       │   ├── api-client.ts        # central API client (token, request/response, mergeGuestCart)
-│       │   ├── AuthContext.tsx      # auth state, token in‑memory, merges guest cart after login
-│       │   ├── CartContext.tsx      # cart state, stores guest cart in localStorage, calls merge on login
-│       │   ├── cookie.ts            # get/set client_token cookie
-│       │   └── auth/
-│       │       └── server.ts        # SSR helper: reads session_token cookie, forwards to /api/auth/me
-│       ├── public/                  # static assets (placeholder.png, etc.)
-│       └── types/
-│           └── index.ts             # shared TypeScript interfaces (Product, User, Order, etc.)
-│
-├── packages/
-│   └── shared-types/               # shared TypeScript definitions (index.ts, package.json, tsconfig.json)
-│
-├── infra/                          # future infra‑as‑code (k8s, terraform)
-│   ├── k8s/
-│   └── terraform/
-├── scripts/                        # top‑level utility scripts (placeholder)
-└── tests/                          # end‑to‑end / integration tests (placeholder)
+│       │   ├── api-client.ts               # central API client and shipment methods
+│       │   ├── AuthContext.tsx
+│       │   ├── CartContext.tsx
+│       │   ├── cookie.ts
+│       │   ├── fetch-with-cookie.ts
+│       │   ├── formatPrice.ts
+│       │   └── auth/server.ts               # SSR auth helper
+│       ├── public/
+│       │   └── images/
+│       │       ├── apothecary/
+│       │       ├── cosmetics/
+│       │       ├── edibles/
+│       │       ├── flower/
+│       │       └── products/
+│       ├── test/setup.tsx
+│       └── types/index.ts                   # frontend Product, User, and Category types
+└── packages/
+    └── shared-types/
+        ├── index.ts                         # shared User, Product, and Category interfaces
+        ├── package.json
+        └── tsconfig.json
+```
 
-Updated Notes (reflecting final state after MP10 Priority 1 & 2)
+## Current Architecture
 
-Authentication Flow (current, production)
-- Backend creates a database session and sets an HttpOnly `session_token` cookie. It also returns the raw token in the JSON response (for client convenience).
-- Frontend stores a readable `client_token` cookie (via lib/auth/server.ts) and keeps the token in memory inside ApiClient.
-- No localStorage is used for authentication (removed in MP6 for security).
-- Client‑side API calls use `Authorization: Bearer <token>` (added by api-client.ts) and `credentials: 'include'`.
-- Server‑side (SSR) components call `lib/auth/server.ts` to read `session_token` from Next.js cookies and forward it as a `Cookie` header when calling `/api/auth/me`. This enables the admin layout to know the user before rendering.
-- **Global auth middleware** (`globalAuth.ts`) attaches `req.user` to every request using the `session_token` cookie – used for per‑user rate limiting and convenience.
+- Backend: Express, Prisma 7, PostgreSQL, Paystack, Brevo, and Shiplogic/The Courier Guy.
+- Frontend: Next.js App Router, React 19, Tailwind CSS, Vitest, and Playwright.
+- Shared code: `packages/shared-types` is consumed by the frontend through the pnpm workspace.
+- Authentication: database-backed sessions using HttpOnly `session_token` cookies, with bearer-token support in backend authentication middleware.
+- Cart: persistent authenticated carts plus local guest carts merged transactionally after login.
+- Checkout: Paystack initialization and webhook processing create and update orders.
+- Courier flow: admins create shipments from the admin order list; shipment metadata and tracking history are stored on `Order`; customers see tracking on order details.
+- Webhooks: Paystack and courier endpoints are registered before `express.json()` and receive `express.raw()` request bodies. Courier authentication uses the configured static Bearer token in `TCG_WEBHOOK_SECRET`; Paystack uses its webhook secret when configured.
+- Observability and protection: Helmet, CORS, structured Pino HTTP logging, request IDs, production rate limiting, per-user cart/checkout limits, and a database health endpoint are registered in `apps/backend/src/index.ts`.
 
-Recent Fixes & MP10 Additions (May 2026)
+## Environment Variables
 
-**Priority 1 – Data Integrity & Robustness**
-- Added `globalAuth` middleware to populate `req.user` globally.
-- Implemented per‑user rate limiting for `/api/cart` (100/15min) and `/api/checkout` (10/15min) using `express-rate-limit` with `ipKeyGenerator` for IPv6 safety.
-- Enhanced health check (`/api/health`) to verify database connection and report latency.
-- Fixed environment variable loading by forcing `dotenv/config` at module initialization inside `prisma.ts` and using a shared PrismaClient singleton (with `PrismaPg` adapter).
-- Resolved `ERR_ERL_KEY_GEN_IPV6` warning by using `ipKeyGenerator` in fallback.
+Backend variables are documented in `apps/backend/.env.example`. The main settings are:
 
-**Priority 2 – Critical UX Gaps**
-- Added `POST /api/cart/merge` endpoint (transaction‑based upsert) to merge guest cart into user’s cart.
-- Frontend: `AuthContext` now reads `localStorage.guestCart` after login, calls `mergeGuestCart`, and clears it.
-- `CartContext` modified to store guest cart items in `localStorage` when user is not logged in (replaces alert popup).
-- Manual cache invalidation: `clearCache(keyPattern?)` in `cache.ts`; called after product create/update/delete to clear `dashboard-stats` and product list caches.
+```text
+DATABASE_URL
+NODE_ENV
+PORT
+FRONTEND_URL
+COOKIE_SECRET
+SESSION_SECURE_COOKIE
+PAYSTACK_SECRET_KEY
+PAYSTACK_PUBLIC_KEY
+PAYSTACK_WEBHOOK_SECRET
+BREVO_API_KEY
+BREVO_EMAIL_FROM
+BREVO_EMAIL_FROM_NAME
+BREVO_SMS_SENDER
+ADMIN_EMAIL
+ADMIN_PHONE
+TCG_API_KEY
+TCG_SANDBOX_MODE
+TCG_WEBHOOK_SECRET
+```
 
-**Deployment URLs**
-- Frontend (primary): https://verdeafrique.co.za
-- Backend API: https://api.verdeafrique.co.za
-- Vercel preview (secondary): https://vasite-frontend.vercel.app
-- Railway origin (secondary): https://backend-production-dfc8.up.railway.app
+The frontend uses `NEXT_PUBLIC_API_URL` for the backend API base URL.
 
-**Environment Variables (updated)**
-Backend (Railway):
-- `DATABASE_URL`, `FRONTEND_URL=https://verdeafrique.co.za`, `COOKIE_SECRET`, `SESSION_SECURE_COOKIE=true`
-- `PAYSTACK_SECRET_KEY`, `PAYSTACK_WEBHOOK_SECRET` (optional)
-- `NODE_ENV=production` (enables rate limiting)
+## Common Commands
 
-Frontend (Vercel):
-- `NEXT_PUBLIC_API_URL=https://api.verdeafrique.co.za`
+```bash
+pnpm install --frozen-lockfile
+pnpm --filter backend exec prisma generate
+pnpm --filter backend exec prisma migrate deploy
+pnpm --filter backend typecheck
+pnpm --filter frontend typecheck
+pnpm --filter backend test
+pnpm --filter frontend test
+pnpm --filter frontend test:e2e
+pnpm -r lint
+pnpm -r build
+```
 
-**Security & Architectural Notes**
-- The `session_token` cookie is HttpOnly, secure, and SameSite=none in production (for cross‑origin requests).
-- `client_token` cookie (readable) is used only for SSR convenience; it is not used for API authentication (the backend ignores it).
-- Rate limiting per user is achieved via the combination of `globalAuth` and custom key generator – unauthenticated requests fall back to masked IP.
-- Guest cart merge uses a database transaction to avoid race conditions; localStorage is cleared only after successful merge.
-- Cache invalidation is manual but centralised – all product mutations call `clearCache('dashboard-stats')` and `clearCache('products')`.
+The GitHub Actions workflow runs dependency installation, Prisma client generation, and the monorepo build on pushes and pull requests. Pushes to `main` deploy the backend to Railway and the frontend to Vercel.
 
-**Remaining MP10 Tasks (not started)**
-- Priority 3: Frontend polish (placeholder images, loading skeletons, toast notifications, empty states).
-- Priority 4: Testing (integration tests, E2E with Playwright).
-- Priority 5: Infrastructure (CORS multi‑origin, structured logging, CI/CD improvements).
-- Priority 6: Scalability (Redis cache, responsive design fixes).
-- Priority 7: Documentation (demo video, STAR stories, Q&A prep).
-
-The project is now fully functional for a real business with guest cart persistence, per‑user rate limiting, and robust health checks. The next focus is user‑facing polish and testing.
+Before production Courier Guy use, test with a sandbox key, create a test order, verify shipment persistence and notification delivery, expose the local webhook with ngrok, and confirm a status webhook updates the order before switching to production credentials.

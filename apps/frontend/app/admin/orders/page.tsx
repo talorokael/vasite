@@ -8,6 +8,7 @@ export default function AdminOrdersPage() {
   const [orders, setOrders] = useState<AdminOrder[]>([]);
   const [loading, setLoading] = useState(true);
   const [updatingId, setUpdatingId] = useState<string | null>(null);
+  const [shippingId, setShippingId] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
 
   const fetchOrders = () => {
@@ -19,6 +20,20 @@ export default function AdminOrdersPage() {
         setError('Failed to load orders. Make sure you are logged in as admin.');
       })
       .finally(() => setLoading(false));
+  };
+
+  const shipOrder = async (orderId: string) => {
+    if (!window.confirm('Create shipment for this order?')) return;
+    setShippingId(orderId);
+    try {
+      await apiClient.shipOrder(orderId);
+      fetchOrders();
+    } catch (err) {
+      console.error(err);
+      alert('Failed to create shipment');
+    } finally {
+      setShippingId(null);
+    }
   };
 
   useEffect(() => {
@@ -75,6 +90,16 @@ export default function AdminOrdersPage() {
                       <option key={s} value={s}>{s}</option>
                     ))}
                   </select>
+                  {['paid', 'processing'].includes(order.status) && !order.trackingNumber && (
+                    <button
+                      type="button"
+                      onClick={() => shipOrder(order.id)}
+                      disabled={shippingId === order.id}
+                      className="ml-2 rounded bg-primary px-2 py-1 text-sm text-white disabled:opacity-50"
+                    >
+                      {shippingId === order.id ? 'Shipping...' : 'Ship order'}
+                    </button>
+                  )}
                 </td>
               </tr>
             ))}
