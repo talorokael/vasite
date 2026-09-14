@@ -13,13 +13,19 @@
   "author": "",
   "license": "ISC",
   "packageManager": "pnpm@10.23.0",
-
   "pnpm": {
     "overrides": {
       "@types/pg": "8.20.0"
-    }
+    },
+    "onlyBuiltDependencies": [
+      "@prisma/engines",
+      "bcrypt",
+      "esbuild",
+      "msw",
+      "prisma",
+      "unrs-resolver"
+    ]
   },
-
   "devDependencies": {
     "eslint": "^9.39.1",
     "prettier": "^3.7.4",

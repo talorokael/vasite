@@ -6,7 +6,16 @@ import { authenticate } from '../middleware/auth.js';
 const router: Router = Router();
 
 const PAYSTACK_SECRET_KEY = process.env.PAYSTACK_SECRET_KEY!;
-const FRONTEND_URL = process.env.FRONTEND_URL!;
+
+// FRONTEND_URL is a comma-separated list (used for CORS).
+// For the Paystack callback we only want the PRIMARY frontend.
+const FRONTEND_URLS = (process.env.FRONTEND_URL || '')
+  .split(',')
+  .map((u) => u.trim())
+  .filter(Boolean);
+
+const PRIMARY_FRONTEND_URL =
+  process.env.PRIMARY_FRONTEND_URL || FRONTEND_URLS[0] || 'http://localhost:3000';
 
 router.post('/create-session', authenticate, async (req, res) => {
   if (!req.user) {
@@ -41,7 +50,7 @@ router.post('/create-session', authenticate, async (req, res) => {
       return res.status(400).json({ error: 'Cart is empty' });
     }
 
-    // Calculate total in cents (Paystack amount is in the smallest currency unit, e.g., cents for ZAR)
+    // Calculate total in cents (Paystack amount is in the smallest currency unit)
     const totalCents = cart.items.reduce(
       (sum, item) => sum + item.product.price * item.quantity,
       0
@@ -64,11 +73,11 @@ router.post('/create-session', authenticate, async (req, res) => {
         amount: totalCents,
         email: user.email,
         currency: 'ZAR',
-        callback_url: `${FRONTEND_URL}/order/success`,
+        callback_url: `${PRIMARY_FRONTEND_URL}/order/success`,
         metadata: {
           userId,
           cartId: cart.id,
-          shippingAddressId: addressId, // store address for webhook
+          shippingAddressId: addressId,
         },
       },
       {
@@ -80,9 +89,6 @@ router.post('/create-session', authenticate, async (req, res) => {
     );
 
     const { authorization_url, reference } = response.data.data;
-
-    // Optionally store the reference + addressId in a temporary table or just rely on metadata
-    // The webhook will create the order using the metadata
 
     res.json({ url: authorization_url, reference });
   } catch (error) {
