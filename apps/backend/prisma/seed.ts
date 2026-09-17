@@ -7,24 +7,20 @@ import { prisma } from '../src/lib/prisma.js';
 console.log('DATABASE_URL is set:', !!process.env.DATABASE_URL);
 
 async function main() {
-  console.log('Starting seed – replacing categories...');
+  console.log('Starting non-destructive catalog seed...');
 
-  // 1. Delete existing products and categories (in correct order)
-  console.log('Clearing existing products and categories...');
-  await prisma.cartItem.deleteMany();   // clears cart items first
-  await prisma.cart.deleteMany();       // then carts
-  await prisma.orderItem.deleteMany();  // order items
-  await prisma.order.deleteMany();      // orders
-  await prisma.product.deleteMany();    // products
-  await prisma.category.deleteMany();   // categories
-
-  // 2. Recreate the six new categories
+  // 1. Ensure the six catalog categories exist.
   const categoryNames = ['Hair', 'Body', 'Face', 'Flower', 'Edible', 'Apothecary'];
   const categories = await Promise.all(
     categoryNames.map(async (name) => {
       const slug = name.toLowerCase();
-      return prisma.category.create({
-        data: {
+      return prisma.category.upsert({
+        where: { slug },
+        update: {
+          name,
+          description: `${name} products`,
+        },
+        create: {
           name,
           description: `${name} products`,
           slug,
@@ -35,7 +31,7 @@ async function main() {
 
   console.log(`Created ${categories.length} categories:`, categories.map(c => c.name));
 
-  // 3. Ensure admin and test user exist (preserve existing users)
+  // 2. Ensure admin and test user exist (preserve existing users)
   const adminPasswordEnv = process.env.ADMIN_PASSWORD;
   if (!adminPasswordEnv) {
     console.error('❌ ADMIN_PASSWORD environment variable is required for seeding');
@@ -66,7 +62,7 @@ async function main() {
     },
   });
 
-  // 4. Add products represented by the images in public/images/products
+  // 3. Add or update products represented by public/images/products.
   const sampleProducts = [
     {
       name: 'Argan & Hemp Oil',
@@ -199,7 +195,10 @@ async function main() {
   for (const product of sampleProducts) {
     await prisma.product.upsert({
       where: { sku: product.sku },
-      update: {},
+      update: {
+        ...product,
+        userId: admin.id,
+      },
       create: {
         ...product,
         userId: admin.id,
