@@ -1,6 +1,7 @@
 // apps/backend/scripts/setup-admin.ts
-import { PrismaClient, Prisma } from '@prisma/client';
+import { Prisma } from '../src/generated/prisma/client.js';
 import { hashPassword } from '../src/lib/auth';
+import { prisma } from '../src/lib/prisma.js';
 import readlineSync from 'readline-sync';
 
 /**
@@ -21,9 +22,6 @@ import readlineSync from 'readline-sync';
  * 5. Hash password and create admin record with metadata
  * 6. Output success message without exposing credentials
  */
-
-// Initialize Prisma client
-const prisma = new PrismaClient();
 
 /**
  * USER METADATA INTERFACE

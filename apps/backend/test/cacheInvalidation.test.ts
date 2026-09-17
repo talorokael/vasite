@@ -1,5 +1,5 @@
 import { describe, it, beforeAll, beforeEach, expect } from 'vitest';
-import type { User } from '@prisma/client';
+import type { User } from '../src/generated/prisma/client.js';
 import { createTestUser, loginAndGetCookie, authenticatedRequest } from './helpers.js';
 import { prisma } from '../src/lib/prisma.js';
 

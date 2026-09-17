@@ -1,7 +1,7 @@
 // apps/backend/prisma/seed.ts
 import 'dotenv/config';
 import { hash } from 'bcrypt';
-import { ProductType, StrainType, Role } from '@prisma/client';
+import { ProductType, StrainType, Role } from '../src/generated/prisma/client.js';
 import { prisma } from '../src/lib/prisma.js';
 
 console.log('DATABASE_URL is set:', !!process.env.DATABASE_URL);
@@ -66,7 +66,7 @@ async function main() {
     },
   });
 
-  // 4. Add sample products for each new category (optional)
+  // 4. Add products represented by the images in public/images/products
   const sampleProducts = [
     {
       name: 'Argan & Hemp Oil',
@@ -75,7 +75,7 @@ async function main() {
       price: 17500,
       productType: ProductType.TOPICAL,
       categoryId: categories.find(c => c.name === 'Apothecary')!.id,
-      images: ['/images/products/Argan & Hemp Oil - Resized.JPG'],
+      images: ['/images/products/Argan+.png'],
     },
     {
       name: 'Body Butter',
@@ -84,16 +84,16 @@ async function main() {
       price: 20000,
       productType: ProductType.TOPICAL,
       categoryId: categories.find(c => c.name === 'Body')!.id,
-      images: ['/images/products/Body Butter.jpg'],
+      images: ['/images/products/BodyB.png'],
     },
     {
-      name: 'Cannabis Triple B Balm',
+      name: 'Triple B Balm',
       sku: 'APOTH-002',
       description: 'Soothing balm with cannabis extracts.',
       price: 25000,
       productType: ProductType.TOPICAL,
       categoryId: categories.find(c => c.name === 'Apothecary')!.id,
-      images: ['/images/products/Cannabis Triple B Balm.jpg'],
+      images: ['/images/products/TripleB.png'],
     },
     {
       name: 'Face Cream (Turmeric)',
@@ -102,7 +102,7 @@ async function main() {
       price: 18000,
       productType: ProductType.TOPICAL,
       categoryId: categories.find(c => c.name === 'Face')!.id,
-      images: ['/images/products/Face Cream(Tumeric).jpg'],
+      images: ['/images/products/Face-Tum.png'],
     },
     {
       name: 'Hair Combo',
@@ -111,34 +111,34 @@ async function main() {
       price: 36000,
       productType: ProductType.TOPICAL,
       categoryId: categories.find(c => c.name === 'Hair')!.id,
-      images: ['/images/products/Hair combo.jpg'],
+      images: ['/images/products/Hair Combo.png'],
     },
     {
-      name: 'Massage Oil',
+      name: 'Green Paradise Massage Oil',
       sku: 'APOTH-003',
       description: 'Aromatic massage oil with essential oils.',
       price: 20000,
       productType: ProductType.TOPICAL,
       categoryId: categories.find(c => c.name === 'Apothecary')!.id,
-      images: ['/images/products/Massage Oil.jpg'],
+      images: ['/images/products/MassOil.png'],
     },
     {
-      name: 'Soap 2',
+      name: 'Activated Charcoal Soap',
       sku: 'BODY-002',
       description: 'Natural exfoliating soap bar.',
       price: 8000,
       productType: ProductType.TOPICAL,
       categoryId: categories.find(c => c.name === 'Body')!.id,
-      images: ['/images/products/Soap 2.jpg'],
+      images: ['/images/products/Soap - Charcoal.png'],
     },
     {
-      name: 'Supplements',
+      name: 'Sinsevuka Capsules',
       sku: 'APOTH-004',
       description: 'Daily wellness supplement blend.',
       price: 21000,
       productType: ProductType.TINCTURE,
       categoryId: categories.find(c => c.name === 'Apothecary')!.id,
-      images: ['/images/products/Supplements.jpg'],
+      images: ['/images/products/Vuka.png'],
     },
     {
       name: 'Yoni Wash',
@@ -147,7 +147,52 @@ async function main() {
       price: 21000,
       productType: ProductType.TOPICAL,
       categoryId: categories.find(c => c.name === 'Apothecary')!.id,
-      images: ['/images/products/Yoni Wash.jpg'],
+      images: ['/images/products/Yoni.png'],
+    },
+    {
+      name: 'Spiced Root Beard Oil',
+      sku: 'HAIR-002',
+      description: 'Natural beard conditioning oil with a warm spice scent.',
+      price: 16000,
+      productType: ProductType.TOPICAL,
+      categoryId: categories.find(c => c.name === 'Hair')!.id,
+      images: ['/images/products/Beard.png'],
+    },
+    {
+      name: 'Night Repair Serum',
+      sku: 'FACE-002',
+      description: 'Botanical facial serum for an evening skincare routine.',
+      price: 22000,
+      productType: ProductType.TOPICAL,
+      categoryId: categories.find(c => c.name === 'Face')!.id,
+      images: ['/images/products/Night.png'],
+    },
+    {
+      name: 'Scalp and Hair Moisturizing Butter',
+      sku: 'HAIR-003',
+      description: 'Moisturizing butter that conditions and protects the hair shaft.',
+      price: 24000,
+      productType: ProductType.TOPICAL,
+      categoryId: categories.find(c => c.name === 'Hair')!.id,
+      images: ['/images/products/Scalp (2).png'],
+    },
+    {
+      name: 'Rapid Hair Growth Oil',
+      sku: 'HAIR-004',
+      description: 'Botanical scalp oil for a nourishing hair care routine.',
+      price: 22000,
+      productType: ProductType.TOPICAL,
+      categoryId: categories.find(c => c.name === 'Hair')!.id,
+      images: ['/images/products/Scalp.png'],
+    },
+    {
+      name: 'Womb Massage Oil',
+      sku: 'APOTH-006',
+      description: 'Botanical massage oil for personal wellness rituals.',
+      price: 20000,
+      productType: ProductType.TOPICAL,
+      categoryId: categories.find(c => c.name === 'Apothecary')!.id,
+      images: ['/images/products/Womb.png'],
     },
   ];
 

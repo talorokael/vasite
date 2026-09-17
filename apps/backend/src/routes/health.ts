@@ -1,9 +1,8 @@
 import { Router } from 'express';
-import { PrismaClient } from '@prisma/client';
+import { prisma } from '../lib/prisma.js';
 import pkg from '../../package.json' with { type: 'json' };
 
 const router: Router = Router();
-const prisma = new PrismaClient();
 
 router.get('/', async (req, res) => {
   let dbStatus = 'ok';

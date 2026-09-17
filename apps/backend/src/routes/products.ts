@@ -2,7 +2,7 @@
 import { clearCache } from "../lib/cache.js";
 import express, { Request, Response } from "express";
 import { prisma } from "../lib/prisma.js";
-import { ProductType, StrainType, Prisma } from "@prisma/client";
+import { ProductType, StrainType, Prisma } from "../generated/prisma/client.js";
 import { authenticate } from "../middleware/auth.js";
 import { requireRole } from "../middleware/rbac.js";
 
